@@ -15,6 +15,7 @@ jobs:
           host: ${{ secrets.EC2_DEV_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
+          command_timeout: 5m
           script: |
             export JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto.x86_64
             export PATH=$JAVA_HOME/bin:$PATH
