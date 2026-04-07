@@ -112,4 +112,9 @@ public class ProductService {
             throw new IllegalStateException("Out of stock for product: " + productId);
         }
     }
+
+    @Transactional
+    public void incrementStock(String productId, int quantity) {
+        productRepository.incrementStock(productId, quantity);
+    }
 }

@@ -466,6 +466,40 @@ public class Steps {
                 .content(body));
     }
 
+    // ═══════════════════════════════════════════════
+    //  PAYMENT EDGE CASES
+    // ═══════════════════════════════════════════════
+
+    @When("I GET payment-callback with the order's Razorpay ID")
+    public void getPaymentCallbackWithOrderId() throws Exception {
+        var order = w.orders.findById(w.savedOrderId).orElseThrow();
+        w.get("/api/checkout/payment-callback?razorpay_order_id=" + order.getRazorpayOrderId());
+    }
+
+    @When("I create order with phone {string} for {string} quantity {int}")
+    public void createOrderWithPhone(String phone, String productName, int qty) throws Exception {
+        createOrderWithPhoneAndEmail(phone, "spam-" + java.util.UUID.randomUUID().toString().substring(0, 8) + "@test.com", productName, qty);
+    }
+
+    @When("I create order with phone {string} and email {string} for {string} quantity {int}")
+    public void createOrderWithPhoneAndEmail(String phone, String email, String productName, int qty) throws Exception {
+        w.postAuth("/api/checkout/create-order", """
+            {
+                "customerName":"Spam Tester","customerPhone":"%s",
+                "customerEmail":"%s",
+                "shippingAddress":{"line1":"123 St","city":"Hyderabad","state":"Telangana","pincode":"500001"},
+                "items":[{"productId":"%s","quantity":%d}]
+            }
+            """.formatted(phone, email, w.productId(productName), qty));
+
+        if (w.status() == 200) {
+            w.savedOrderNumber = w.jsonKey("orderNumber");
+            var order = w.orders.findByOrderNumber(w.savedOrderNumber).orElse(null);
+            w.savedOrderId = order != null ? order.getId() : null;
+            w.savedOrderAmount = w.jsonKeyLong("amount");
+        }
+    }
+
     @When("I update product {string} with stale version")
     public void updateWithStaleVersion(String name) throws Exception {
         String id = w.productId(name);

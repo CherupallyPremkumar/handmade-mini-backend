@@ -14,6 +14,10 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     @Query("UPDATE Product p SET p.stock = p.stock - :qty WHERE p.id = :id AND p.stock >= :qty")
     int decrementStock(@Param("id") String id, @Param("qty") int qty);
 
+    @Modifying
+    @Query("UPDATE Product p SET p.stock = p.stock + :qty WHERE p.id = :id")
+    void incrementStock(@Param("id") String id, @Param("qty") int qty);
+
     List<Product> findByIsActiveTrue();
 
     List<Product> findByFabricAndIsActiveTrue(Product.Fabric fabric);

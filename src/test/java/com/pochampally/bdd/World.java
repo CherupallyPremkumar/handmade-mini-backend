@@ -31,6 +31,7 @@ public class World {
     @Autowired OrderItemRepository orderItems;
     @Autowired CartItemRepository cartItems;
     @Autowired LoginRateLimiter rateLimiter;
+    @Autowired com.pochampally.controller.CheckoutController checkoutController;
 
     // ── Per-scenario state ──
     MvcResult lastResult;
@@ -44,6 +45,7 @@ public class World {
     @Before(order = 0)
     public void cleanDb() {
         rateLimiter.reset();
+        checkoutController.getPaymentVerifyRateLimiter().reset();
         orderItems.deleteAll();
         orders.deleteAll();
         cartItems.deleteAll();

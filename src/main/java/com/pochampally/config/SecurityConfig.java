@@ -61,8 +61,9 @@ public class SecurityConfig {
                         // Public: health check
                         .requestMatchers("/actuator/health").permitAll()
 
-                        // Checkout: payment callback is public (Razorpay redirect)
+                        // Checkout: payment callback is public (Razorpay redirect — POST for success, GET for failure)
                         .requestMatchers(HttpMethod.POST, "/api/checkout/payment-callback").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/checkout/payment-callback").permitAll()
 
                         // Checkout: requires login
                         .requestMatchers("/api/checkout/**").authenticated()

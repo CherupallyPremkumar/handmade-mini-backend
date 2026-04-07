@@ -28,4 +28,11 @@ public interface OrderRepository extends JpaRepository<Order, String> {
     List<Order> findByStatusAndCreatedTimeBefore(Order.OrderStatus status, java.time.Instant cutoff);
 
     long countByCustomerEmailAndStatus(String email, Order.OrderStatus status);
+
+    long countByCustomerPhoneAndStatus(String phone, Order.OrderStatus status);
+
+    @Query("SELECT o FROM Order o WHERE o.customerPhone = :phone AND o.status = 'PENDING_PAYMENT' " +
+           "AND o.razorpayOrderId IS NOT NULL AND o.createdTime > :since ORDER BY o.createdTime DESC")
+    List<Order> findRecentPendingByPhone(@Param("phone") String phone,
+                                         @Param("since") java.time.Instant since);
 }

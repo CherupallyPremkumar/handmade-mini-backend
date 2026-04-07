@@ -42,7 +42,12 @@ public class RazorpayWebhookController {
 
         try {
             JsonNode payload = objectMapper.readTree(rawBody);
-            String event = payload.get("event").asText();
+            JsonNode eventNode = payload.get("event");
+            if (eventNode == null || eventNode.isNull()) {
+                log.warn("Razorpay webhook missing 'event' field");
+                return ResponseEntity.badRequest().body("Missing event field");
+            }
+            String event = eventNode.asText();
 
             log.info("Razorpay webhook received. Event: {}", event);
 
@@ -54,40 +59,50 @@ public class RazorpayWebhookController {
 
             return ResponseEntity.ok("OK");
 
-        } catch (Exception e) {
-            log.error("Error processing Razorpay webhook", e);
-            // Return 200 to avoid Razorpay retries for parsing errors
+        } catch (IllegalArgumentException | IllegalStateException |
+                 com.fasterxml.jackson.core.JsonProcessingException e) {
+            // Non-retryable: bad data, invalid state, malformed JSON — return 200 so Razorpay doesn't retry
+            log.warn("Webhook processing rejected: {}", e.getMessage());
             return ResponseEntity.ok("OK");
+        } catch (Exception e) {
+            // Retryable: DB down, network error — return 500 so Razorpay retries
+            log.error("Error processing Razorpay webhook", e);
+            return ResponseEntity.internalServerError().body("Processing error");
         }
     }
 
     private void handlePaymentCaptured(JsonNode payload) {
-        try {
-            JsonNode paymentEntity = payload.at("/payload/payment/entity");
-            String razorpayOrderId = paymentEntity.get("order_id").asText();
-            String razorpayPaymentId = paymentEntity.get("id").asText();
+        JsonNode paymentEntity = payload.at("/payload/payment/entity");
+        String razorpayOrderId = extractField(paymentEntity, "order_id");
+        String razorpayPaymentId = extractField(paymentEntity, "id");
 
-            log.info("Payment captured via webhook. Razorpay order: {}, payment: {}",
-                    razorpayOrderId, razorpayPaymentId);
-
-            orderService.markAsPaid(razorpayOrderId, razorpayPaymentId);
-
-        } catch (Exception e) {
-            log.error("Error handling payment.captured webhook", e);
+        if (razorpayOrderId == null || razorpayPaymentId == null) {
+            throw new IllegalArgumentException("Webhook payload missing order_id or payment id");
         }
+
+        log.info("Payment captured via webhook. Razorpay order: {}, payment: {}",
+                razorpayOrderId, razorpayPaymentId);
+
+        orderService.markAsPaid(razorpayOrderId, razorpayPaymentId);
     }
 
     private void handlePaymentFailed(JsonNode payload) {
-        try {
-            JsonNode paymentEntity = payload.at("/payload/payment/entity");
-            String razorpayOrderId = paymentEntity.get("order_id").asText();
+        JsonNode paymentEntity = payload.at("/payload/payment/entity");
+        String razorpayOrderId = extractField(paymentEntity, "order_id");
 
-            log.warn("Payment failed via webhook. Razorpay order: {}", razorpayOrderId);
-
-            orderService.markPaymentFailed(razorpayOrderId);
-
-        } catch (Exception e) {
-            log.error("Error handling payment.failed webhook", e);
+        if (razorpayOrderId == null) {
+            throw new IllegalArgumentException("Webhook payload missing order_id");
         }
+
+        log.warn("Payment failed via webhook. Razorpay order: {}", razorpayOrderId);
+
+        orderService.markPaymentFailed(razorpayOrderId);
+    }
+
+    private String extractField(JsonNode node, String field) {
+        if (node == null || node.isMissingNode()) return null;
+        JsonNode fieldNode = node.get(field);
+        if (fieldNode == null || fieldNode.isNull() || fieldNode.asText().isBlank()) return null;
+        return fieldNode.asText();
     }
 }
