@@ -37,7 +37,7 @@ public class ProductService {
     }
 
     public List<Product> filterByColor(String color) {
-        return productRepository.findByColorAndIsActiveTrue(color);
+        return productRepository.findByBodyColorAndIsActiveTrue(color);
     }
 
     public List<Product> filterByPriceRange(Long minPrice, Long maxPrice) {
@@ -62,7 +62,7 @@ public class ProductService {
         existing.setCategory(updates.getCategory());
         existing.setFabric(updates.getFabric());
         existing.setWeaveType(updates.getWeaveType());
-        existing.setColor(updates.getColor());
+        existing.setBodyColor(updates.getBodyColor());
         existing.setSize(updates.getSize());
         existing.setLengthMeters(updates.getLengthMeters());
         existing.setBlousePiece(updates.getBlousePiece());

@@ -1,6 +1,6 @@
 package com.pochampally.controller;
 
-import com.pochampally.config.LoginRateLimiter;
+import com.pochampally.config.RateLimiter;
 import com.pochampally.dto.AuthResponse;
 import com.pochampally.dto.LoginRequest;
 import com.pochampally.dto.RegisterRequest;
@@ -24,7 +24,7 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final LoginRateLimiter loginRateLimiter;
+    private final RateLimiter loginRateLimiter;
 
     private static final String AUTH_COOKIE = "dhn_token";
     private static final int COOKIE_MAX_AGE = 24 * 60 * 60; // 24 hours

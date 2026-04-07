@@ -500,6 +500,45 @@ public class Steps {
         }
     }
 
+    // ═══════════════════════════════════════════════
+    //  EMAIL VERIFICATION
+    // ═══════════════════════════════════════════════
+
+    @When("I register and login unverified as {string} with password {string}")
+    public void registerAndLoginUnverified(String email, String pw) throws Exception {
+        w.post("/api/auth/register",
+                """
+                {"name":"Unverified User","email":"%s","password":"%s"}
+                """.formatted(email, pw));
+        // Do NOT auto-verify — login and extract token from cookie
+        org.springframework.test.web.servlet.MvcResult r = w.post("/api/auth/login",
+                """
+                {"email":"%s","password":"%s"}
+                """.formatted(email, pw));
+        jakarta.servlet.http.Cookie cookie = r.getResponse().getCookie("dhn_token");
+        w.token = cookie != null ? cookie.getValue() : w.jsonKeyFrom(r, "token");
+    }
+
+    @When("I create unverified order for {string} quantity {int}")
+    public void createUnverifiedOrder(String productName, int qty) throws Exception {
+        // User was registered but NOT auto-verified — use the token from login
+        w.postAuth("/api/checkout/create-order", """
+            {
+                "customerName":"Unverified","customerPhone":"+919000000000",
+                "customerEmail":"unverified@test.com",
+                "shippingAddress":{"line1":"123 St","city":"Hyderabad","state":"Telangana","pincode":"500001"},
+                "items":[{"productId":"%s","quantity":%d}]
+            }
+            """.formatted(w.productId(productName), qty));
+    }
+
+    @When("I verify email for {string}")
+    public void verifyEmailFor(String email) throws Exception {
+        var user = w.users.findByEmail(email).orElseThrow();
+        String token = user.getVerificationToken();
+        w.get("/api/auth/verify-email?token=" + token);
+    }
+
     @When("I update product {string} with stale version")
     public void updateWithStaleVersion(String name) throws Exception {
         String id = w.productId(name);
@@ -511,7 +550,7 @@ public class Steps {
 
         // Now send update with old version (0)
         String body = """
-            {"name":"%s","fabric":"SILK","weaveType":"IKAT","color":"Blue",
+            {"name":"%s","fabric":"SILK","weaveType":"IKAT","bodyColor":"Blue",
              "sellingPrice":100000,"mrp":150000,"stock":5,"version":0,
              "gstPct":5,"hsnCode":"50079090"}
             """.formatted(name);

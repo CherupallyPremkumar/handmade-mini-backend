@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="010-copy-color-to-body-color" author="homebase_db">
+        <!-- Copy existing color data to body_color where body_color is null -->
+        <sql>UPDATE homebase_db.products SET body_color = color WHERE body_color IS NULL AND color IS NOT NULL;</sql>
+    </changeSet>
+
+    <changeSet id="010-drop-color-column" author="homebase_db">
+        <dropColumn tableName="products" schemaName="homebase_db" columnName="color"/>
+    </changeSet>
+
+</databaseChangeLog>

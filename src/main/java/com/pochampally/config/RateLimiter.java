@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
  * Entries are lazily cleaned up on each check.
  */
 @Component
-public class LoginRateLimiter {
+public class RateLimiter {
 
     private static final int MAX_ATTEMPTS = 5;
     private static final int WINDOW_SECONDS = 60;

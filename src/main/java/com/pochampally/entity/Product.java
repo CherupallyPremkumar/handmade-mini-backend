@@ -52,9 +52,6 @@ public class Product {
     private WeaveType weaveType;
 
     @Column(length = 50)
-    private String color;
-
-    @Column(length = 50)
     private String size;
 
     @Column(name = "length_meters")

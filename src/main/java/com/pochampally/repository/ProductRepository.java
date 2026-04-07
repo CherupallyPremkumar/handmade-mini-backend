@@ -33,8 +33,8 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isDeleted = false AND p.sellingPrice BETWEEN :minPrice AND :maxPrice")
     List<Product> findByPriceRange(@Param("minPrice") Long minPrice, @Param("maxPrice") Long maxPrice);
 
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isDeleted = false AND LOWER(p.color) = LOWER(:color)")
-    List<Product> findByColorAndIsActiveTrue(@Param("color") String color);
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isDeleted = false AND LOWER(p.bodyColor) = LOWER(:color)")
+    List<Product> findByBodyColorAndIsActiveTrue(@Param("color") String color);
 
     @Query("SELECT p FROM Product p WHERE p.isDeleted = false")
     List<Product> findAllNotDeleted();

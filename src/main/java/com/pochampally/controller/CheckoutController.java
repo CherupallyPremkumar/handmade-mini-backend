@@ -1,6 +1,6 @@
 package com.pochampally.controller;
 
-import com.pochampally.config.LoginRateLimiter;
+import com.pochampally.config.RateLimiter;
 import com.pochampally.dto.CreateOrderRequest;
 import com.pochampally.entity.Address;
 import com.pochampally.entity.Order;
@@ -31,7 +31,7 @@ public class CheckoutController {
     private final RazorpayService razorpayService;
     private final AuthService authService;
     private final AddressService addressService;
-    private final LoginRateLimiter paymentVerifyRateLimiter;
+    private final RateLimiter paymentVerifyRateLimiter;
 
     @Value("${app.frontend-url:https://dhanunjaiah.com}")
     private String frontendUrl;
@@ -42,11 +42,11 @@ public class CheckoutController {
         this.razorpayService = razorpayService;
         this.authService = authService;
         this.addressService = addressService;
-        this.paymentVerifyRateLimiter = new LoginRateLimiter();
+        this.paymentVerifyRateLimiter = new RateLimiter();
     }
 
     /** Visible for test cleanup. */
-    public LoginRateLimiter getPaymentVerifyRateLimiter() {
+    public RateLimiter getPaymentVerifyRateLimiter() {
         return paymentVerifyRateLimiter;
     }
 

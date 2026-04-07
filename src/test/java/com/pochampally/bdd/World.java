@@ -2,7 +2,7 @@ package com.pochampally.bdd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pochampally.config.LoginRateLimiter;
+import com.pochampally.config.RateLimiter;
 import com.pochampally.entity.Product;
 import com.pochampally.entity.User;
 import com.pochampally.repository.*;
@@ -32,7 +32,7 @@ public class World {
     @Autowired CartItemRepository cartItems;
     @Autowired com.pochampally.repository.AddressRepository addresses;
     @Autowired com.pochampally.repository.AppSettingRepository appSettings;
-    @Autowired LoginRateLimiter rateLimiter;
+    @Autowired RateLimiter rateLimiter;
     @Autowired com.pochampally.controller.CheckoutController checkoutController;
 
     // ── Per-scenario state ──
@@ -206,7 +206,7 @@ public class World {
                     .secondaryDescription(row.getOrDefault("secondaryDescription", "Perfect for weddings, festivals, and special occasions. Dry clean recommended."))
                     .fabric(Product.Fabric.valueOf(row.get("fabric")))
                     .weaveType(Product.WeaveType.valueOf(row.get("weaveType")))
-                    .color(row.get("color"))
+                    .bodyColor(row.get("color"))
                     .sellingPrice(Long.parseLong(row.get("sellingPrice")))
                     .mrp(Long.parseLong(row.get("mrp")))
                     .stock(Integer.parseInt(row.get("stock")))
