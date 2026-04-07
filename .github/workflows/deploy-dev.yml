@@ -22,18 +22,18 @@ jobs:
             cd /home/ec2-user/handmade-mini-backend
             git pull origin dev
             mvn clean package -DskipTests
-            # Kill existing app (by PID to avoid killing SSH session)
-            PID=$(pgrep -f 'java.*pochampally-backend' || true)
-            if [ -n "$PID" ]; then
-              kill $PID
+            # Kill existing app using PID file
+            if [ -f app.pid ]; then
+              kill $(cat app.pid) 2>/dev/null || true
               sleep 2
             fi
             # Source env vars and start app
             source .env
             nohup java -Xmx512m -Xms256m -jar target/pochampally-backend-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+            echo $! > app.pid
             sleep 5
             # Verify app started
-            if pgrep -f 'java.*pochampally-backend' > /dev/null; then
+            if kill -0 $(cat app.pid) 2>/dev/null; then
               echo "App started successfully"
             else
               echo "App failed to start. Last logs:"
