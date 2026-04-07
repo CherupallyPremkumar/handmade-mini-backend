@@ -53,6 +53,11 @@ public class ProductController {
         return ResponseEntity.ok(productService.getById(id));
     }
 
+    @GetMapping("/api/products/sku/{sku}")
+    public ResponseEntity<Product> getProductBySku(@PathVariable String sku) {
+        return ResponseEntity.ok(productService.getBySku(sku));
+    }
+
     // --- Admin endpoints ---
 
     @GetMapping("/api/admin/products")

@@ -212,6 +212,7 @@ public class World {
                     .stock(Integer.parseInt(row.get("stock")))
                     .gstPct(Integer.parseInt(row.getOrDefault("gstPct", "5")))
                     .hsnCode("50079090")
+                    .sku("DHN-TEST-" + String.format("%04d", productIds.size() + 1))
                     .isActive(!"Inactive Product".equals(row.get("name")))
                     .build();
             p = products.save(p);

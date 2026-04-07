@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, String> {
 
@@ -38,4 +39,6 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 
     @Query("SELECT p FROM Product p WHERE p.isDeleted = false")
     List<Product> findAllNotDeleted();
+
+    Optional<Product> findBySku(String sku);
 }

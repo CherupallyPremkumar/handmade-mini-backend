@@ -28,6 +28,11 @@ public class ProductService {
                 .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
     }
 
+    public Product getBySku(String sku) {
+        return productRepository.findBySku(sku)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found for SKU: " + sku));
+    }
+
     public List<Product> filterByFabric(Product.Fabric fabric) {
         return productRepository.findByFabricAndIsActiveTrue(fabric);
     }
@@ -50,7 +55,17 @@ public class ProductService {
 
     @Transactional
     public Product create(Product product) {
+        if (product.getSku() == null || product.getSku().isBlank()) {
+            product.setSku(generateSku(product));
+        }
         return productRepository.save(product);
+    }
+
+    private String generateSku(Product product) {
+        String prefix = "DHN";
+        String fabric = product.getFabric() != null ? product.getFabric().name().substring(0, Math.min(3, product.getFabric().name().length())) : "GEN";
+        long count = productRepository.count() + 1;
+        return (prefix + "-" + fabric + "-" + String.format("%04d", count)).toUpperCase();
     }
 
     @Transactional

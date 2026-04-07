@@ -132,7 +132,7 @@ public class Product {
     @Column(length = 200)
     private String certification;
 
-    @Column(length = 50, unique = true)
+    @Column(length = 50, unique = true, nullable = false)
     private String sku;
 
     // SEO tags (comma-separated)
