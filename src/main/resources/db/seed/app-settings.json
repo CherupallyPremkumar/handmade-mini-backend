@@ -33,5 +33,8 @@
 
   {"key": "send_order_confirmation_email", "value": "true", "description": "Email customer when order is placed"},
   {"key": "send_shipping_update_email", "value": "true", "description": "Email customer when order is shipped"},
-  {"key": "admin_order_alert_email", "value": "", "description": "Email address for new order notifications (blank = disabled)"}
+  {"key": "admin_order_alert_email", "value": "", "description": "Email address for new order notifications (blank = disabled)"},
+
+  {"key": "max_banners", "value": "10", "description": "Maximum number of banners allowed"},
+  {"key": "banner_scroll_seconds", "value": "5", "description": "Seconds each banner is shown before auto-scrolling"}
 ]

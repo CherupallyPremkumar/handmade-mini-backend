@@ -19,12 +19,16 @@ public class CmsController {
     private final BannerRepository bannerRepository;
     private final CategoryRepository categoryRepository;
     private final ImageStorageService imageStorageService;
+    private final com.pochampally.service.SettingsService settingsService;
 
     // ═══ Public: Storefront ═══
 
     @GetMapping("/api/cms/banners")
-    public ResponseEntity<List<Banner>> activeBanners() {
-        return ResponseEntity.ok(bannerRepository.findByIsActiveTrueOrderByPositionAsc());
+    public ResponseEntity<Map<String, Object>> activeBanners() {
+        return ResponseEntity.ok(Map.of(
+                "banners", bannerRepository.findByIsActiveTrueOrderByPositionAsc(),
+                "scrollSeconds", settingsService.getInt("banner_scroll_seconds")
+        ));
     }
 
     @GetMapping("/api/cms/categories")
@@ -54,6 +58,10 @@ public class CmsController {
     public ResponseEntity<Banner> createBanner(@RequestBody Banner banner) {
         if (banner.getImageUrl() == null || banner.getImageUrl().isBlank()) {
             throw new IllegalArgumentException("Image URL is required");
+        }
+        int maxBanners = settingsService.getInt("max_banners");
+        if (maxBanners > 0 && bannerRepository.count() >= maxBanners) {
+            throw new IllegalStateException("Maximum " + maxBanners + " banners allowed");
         }
         return ResponseEntity.ok(bannerRepository.save(banner));
     }
