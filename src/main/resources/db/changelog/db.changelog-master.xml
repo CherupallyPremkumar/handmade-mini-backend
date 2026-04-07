@@ -8,5 +8,6 @@
     <include file="db/changelog/001-create-tables.xml"/>
     <include file="db/changelog/002-seed-products.xml"/>
     <include file="db/changelog/003-create-users.xml"/>
+    <include file="db/changelog/004-add-email-verification.xml"/>
 
 </databaseChangeLog>

@@ -22,11 +22,14 @@ public class CheckoutController {
 
     private final OrderService orderService;
     private final RazorpayService razorpayService;
+    private final com.pochampally.service.AuthService authService;
     private final com.pochampally.config.LoginRateLimiter paymentVerifyRateLimiter;
 
-    public CheckoutController(OrderService orderService, RazorpayService razorpayService) {
+    public CheckoutController(OrderService orderService, RazorpayService razorpayService,
+                               com.pochampally.service.AuthService authService) {
         this.orderService = orderService;
         this.razorpayService = razorpayService;
+        this.authService = authService;
         this.paymentVerifyRateLimiter = new com.pochampally.config.LoginRateLimiter();
     }
 
@@ -57,7 +60,18 @@ public class CheckoutController {
      * }
      */
     @PostMapping("/create-order")
-    public ResponseEntity<Map<String, Object>> createOrder(@RequestBody CreateOrderRequest req) {
+    public ResponseEntity<Map<String, Object>> createOrder(@RequestBody CreateOrderRequest req,
+                                                            org.springframework.security.core.Authentication authentication) {
+        // Block checkout for unverified email
+        if (authentication != null) {
+            com.pochampally.entity.User user = authService.getUserById(authentication.getName());
+            if (!user.getEmailVerified()) {
+                return ResponseEntity.status(403).body(Map.of(
+                        "error", "Please verify your email before placing an order.",
+                        "emailVerified", false));
+            }
+        }
+
         String customerName = req.getCustomerName();
         String customerPhone = req.getCustomerPhone();
         String customerEmail = req.getCustomerEmail();

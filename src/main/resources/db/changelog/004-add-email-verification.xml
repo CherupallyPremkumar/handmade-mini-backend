@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="004-add-email-verification-columns" author="homebase_db">
+        <addColumn tableName="users" schemaName="homebase_db">
+            <column name="email_verified" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="verification_token" type="VARCHAR(100)"/>
+            <column name="verification_token_expiry" type="TIMESTAMP WITH TIME ZONE"/>
+        </addColumn>
+
+        <!-- Mark existing admin users as verified -->
+        <sql>UPDATE homebase_db.users SET email_verified = true WHERE role = 'ADMIN';</sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -40,7 +40,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public: auth endpoints
-                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/logout").permitAll()
+                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/logout",
+                                "/api/auth/verify-email", "/api/auth/resend-verification").permitAll()
 
                         // Public: browse products
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()

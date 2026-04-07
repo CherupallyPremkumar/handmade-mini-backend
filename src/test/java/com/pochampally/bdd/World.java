@@ -145,12 +145,18 @@ public class World {
 
     // ── Auth helpers ──
 
-    /** Register + login, store token from cookie. Works even if email already registered. */
+    /** Register + login, store token from cookie. Auto-verifies email for tests. */
     void loginAs(String email, String password) throws Exception {
         post("/api/auth/register",
                 """
                 {"name":"Test User","email":"%s","password":"%s"}
                 """.formatted(email, password));
+
+        // Auto-verify email in tests
+        users.findByEmail(email).ifPresent(u -> {
+            u.setEmailVerified(true);
+            users.save(u);
+        });
 
         MvcResult r = post("/api/auth/login",
                 """
@@ -162,7 +168,7 @@ public class World {
         token = cookie != null ? cookie.getValue() : jsonKeyFrom(r, "token");
     }
 
-    /** Register + login as admin (promotes role in DB). */
+    /** Register + login as admin (promotes role in DB, auto-verifies email). */
     void loginAsAdmin() throws Exception {
         String email = "admin-" + UUID.randomUUID().toString().substring(0, 8) + "@test.com";
         post("/api/auth/register",
@@ -172,6 +178,7 @@ public class World {
 
         users.findByEmail(email).ifPresent(u -> {
             u.setRole(User.Role.ADMIN);
+            u.setEmailVerified(true);
             users.save(u);
         });
 

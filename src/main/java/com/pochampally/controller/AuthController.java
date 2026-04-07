@@ -35,12 +35,12 @@ public class AuthController {
         AuthResponse authResponse = authService.register(request);
         setAuthCookie(response, authResponse.getToken());
 
-        // Return user info + token (for API clients) AND set httpOnly cookie (for browser)
         return ResponseEntity.ok(Map.of(
                 "token", authResponse.getToken(),
                 "name", authResponse.getName(),
                 "email", authResponse.getEmail(),
-                "role", authResponse.getRole()
+                "role", authResponse.getRole(),
+                "emailVerified", authResponse.getEmailVerified()
         ));
     }
 
@@ -66,8 +66,25 @@ public class AuthController {
                 "token", authResponse.getToken(),
                 "name", authResponse.getName(),
                 "email", authResponse.getEmail(),
-                "role", authResponse.getRole()
+                "role", authResponse.getRole(),
+                "emailVerified", authResponse.getEmailVerified()
         ));
+    }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<Map<String, Object>> verifyEmail(@RequestParam("token") String token) {
+        String message = authService.verifyEmail(token);
+        return ResponseEntity.ok(Map.of("message", message, "verified", true));
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Map<String, String>> resendVerification(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
+        }
+        authService.resendVerification(email);
+        return ResponseEntity.ok(Map.of("message", "Verification email sent"));
     }
 
     @PostMapping("/logout")
@@ -93,7 +110,8 @@ public class AuthController {
                 "name", user.getName() != null ? user.getName() : "",
                 "email", user.getEmail(),
                 "phone", user.getPhone() != null ? user.getPhone() : "",
-                "role", user.getRole().name()
+                "role", user.getRole().name(),
+                "emailVerified", user.getEmailVerified()
         ));
     }
 
