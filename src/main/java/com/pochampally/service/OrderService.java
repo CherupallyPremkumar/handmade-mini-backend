@@ -26,7 +26,7 @@ public class OrderService {
     private final RazorpayService razorpayService;
     private final SettingsService settingsService;
 
-    private static final int PAYMENT_TIMEOUT_MINUTES = 30;
+    // Fallback only — real value from settingsService.getInt("payment_timeout_minutes")
 
     @Transactional
     public Order createOrderFromItems(List<Map<String, Object>> items, String customerName,
@@ -256,7 +256,9 @@ public class OrderService {
     @Scheduled(fixedRate = 5 * 60 * 1000) // every 5 minutes
     @Transactional
     public void cancelExpiredOrders() {
-        Instant cutoff = Instant.now().minus(PAYMENT_TIMEOUT_MINUTES, ChronoUnit.MINUTES);
+        int timeoutMinutes = settingsService.getInt("payment_timeout_minutes");
+        if (timeoutMinutes <= 0) timeoutMinutes = 30;
+        Instant cutoff = Instant.now().minus(timeoutMinutes, ChronoUnit.MINUTES);
         List<Order> expired = orderRepository.findByStatusAndCreatedTimeBefore(
                 Order.OrderStatus.PENDING_PAYMENT, cutoff);
 
@@ -265,7 +267,7 @@ public class OrderService {
             order.setPaymentStatus("expired");
             orderRepository.save(order);
             log.info("Expired order {} cancelled (no payment after {} min)",
-                    order.getOrderNumber(), PAYMENT_TIMEOUT_MINUTES);
+                    order.getOrderNumber(), timeoutMinutes);
         }
 
         if (!expired.isEmpty()) {
