@@ -19,6 +19,10 @@ public class ProductService {
         return productRepository.findByIsActiveTrue();
     }
 
+    public List<Product> listAll() {
+        return productRepository.findAll();
+    }
+
     public Product getById(String id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
@@ -69,7 +73,15 @@ public class ProductService {
         existing.setVideoUrl(updates.getVideoUrl());
         existing.setHsnCode(updates.getHsnCode());
         existing.setGstPct(updates.getGstPct());
+        existing.setIsActive(updates.getIsActive());
         return productRepository.save(existing);
+    }
+
+    @Transactional
+    public Product toggleActive(String id) {
+        Product product = getById(id);
+        product.setIsActive(!product.getIsActive());
+        return productRepository.save(product);
     }
 
     @Transactional
