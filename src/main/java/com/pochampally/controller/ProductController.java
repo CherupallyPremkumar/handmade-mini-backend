@@ -53,6 +53,11 @@ public class ProductController {
 
     // --- Admin endpoints ---
 
+    @GetMapping("/api/admin/products")
+    public ResponseEntity<List<Product>> listAllProducts() {
+        return ResponseEntity.ok(productService.listAll());
+    }
+
     @PostMapping("/api/admin/products")
     public ResponseEntity<Product> createProduct(@Valid @RequestBody Product product) {
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.create(product));
@@ -61,6 +66,11 @@ public class ProductController {
     @PutMapping("/api/admin/products/{id}")
     public ResponseEntity<Product> updateProduct(@PathVariable String id, @Valid @RequestBody Product product) {
         return ResponseEntity.ok(productService.update(id, product));
+    }
+
+    @PatchMapping("/api/admin/products/{id}/toggle-active")
+    public ResponseEntity<Product> toggleActive(@PathVariable String id) {
+        return ResponseEntity.ok(productService.toggleActive(id));
     }
 
     @DeleteMapping("/api/admin/products/{id}")
