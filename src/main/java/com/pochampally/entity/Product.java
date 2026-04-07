@@ -98,6 +98,50 @@ public class Product {
     @Builder.Default
     private Integer gstPct = 5;
 
+    // Physical attributes
+    @Column(name = "weight_grams")
+    private Integer weightGrams;
+
+    @Column(name = "width_inches")
+    private Double widthInches;
+
+    @Column(name = "blouse_length_meters")
+    private Double blouseLengthMeters;
+
+    // Classification
+    @Column(length = 200)
+    private String occasion;
+
+    @Column(name = "work_type", length = 200)
+    private String workType;
+
+    @Column(length = 200)
+    private String pattern;
+
+    // Color breakdown
+    @Column(name = "body_color", length = 100)
+    private String bodyColor;
+
+    @Column(name = "border_color", length = 100)
+    private String borderColor;
+
+    @Column(name = "pallu_color", length = 100)
+    private String palluColor;
+
+    // Details
+    @Column(name = "care_instructions", length = 500)
+    private String careInstructions;
+
+    @Column(length = 200)
+    private String certification;
+
+    @Column(length = 50, unique = true)
+    private String sku;
+
+    // SEO tags (comma-separated)
+    @Column(length = 500)
+    private String tags;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;

@@ -75,6 +75,19 @@ public class ProductService {
         existing.setHsnCode(updates.getHsnCode());
         existing.setGstPct(updates.getGstPct());
         existing.setIsActive(updates.getIsActive());
+        existing.setWeightGrams(updates.getWeightGrams());
+        existing.setWidthInches(updates.getWidthInches());
+        existing.setBlouseLengthMeters(updates.getBlouseLengthMeters());
+        existing.setOccasion(updates.getOccasion());
+        existing.setWorkType(updates.getWorkType());
+        existing.setPattern(updates.getPattern());
+        existing.setBodyColor(updates.getBodyColor());
+        existing.setBorderColor(updates.getBorderColor());
+        existing.setPalluColor(updates.getPalluColor());
+        existing.setCareInstructions(updates.getCareInstructions());
+        existing.setCertification(updates.getCertification());
+        existing.setSku(updates.getSku());
+        existing.setTags(updates.getTags());
         return productRepository.save(existing);
     }
 

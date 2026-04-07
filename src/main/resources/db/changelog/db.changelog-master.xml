@@ -13,5 +13,6 @@
     <include file="db/changelog/006-create-app-settings.xml"/>
     <include file="db/changelog/007-add-is-deleted-to-products.xml"/>
     <include file="db/changelog/008-add-product-settings-and-secondary-desc.xml"/>
+    <include file="db/changelog/009-add-rich-product-attributes.xml"/>
 
 </databaseChangeLog>
