@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="006-create-app-settings-table" author="homebase_db">
+        <createTable tableName="app_settings" schemaName="homebase_db">
+            <column name="setting_key" type="VARCHAR(100)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="setting_value" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(500)"/>
+        </createTable>
+
+        <!-- Seed default settings -->
+        <insert tableName="app_settings" schemaName="homebase_db">
+            <column name="setting_key" value="max_addresses_per_user"/>
+            <column name="setting_value" value="10"/>
+            <column name="description" value="Maximum saved addresses per customer"/>
+        </insert>
+        <insert tableName="app_settings" schemaName="homebase_db">
+            <column name="setting_key" value="max_pending_orders"/>
+            <column name="setting_value" value="3"/>
+            <column name="description" value="Maximum pending orders per customer"/>
+        </insert>
+        <insert tableName="app_settings" schemaName="homebase_db">
+            <column name="setting_key" value="free_shipping_threshold"/>
+            <column name="setting_value" value="99900"/>
+            <column name="description" value="Free shipping above this amount (in paisa)"/>
+        </insert>
+        <insert tableName="app_settings" schemaName="homebase_db">
+            <column name="setting_key" value="shipping_cost"/>
+            <column name="setting_value" value="9900"/>
+            <column name="description" value="Flat shipping cost in paisa"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

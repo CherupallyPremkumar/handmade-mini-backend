@@ -31,6 +31,7 @@ public class World {
     @Autowired OrderItemRepository orderItems;
     @Autowired CartItemRepository cartItems;
     @Autowired com.pochampally.repository.AddressRepository addresses;
+    @Autowired com.pochampally.repository.AppSettingRepository appSettings;
     @Autowired LoginRateLimiter rateLimiter;
     @Autowired com.pochampally.controller.CheckoutController checkoutController;
 

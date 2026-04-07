@@ -2,6 +2,7 @@ package com.pochampally.controller;
 
 import com.pochampally.entity.Address;
 import com.pochampally.repository.AddressRepository;
+import com.pochampally.service.SettingsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,9 +17,7 @@ import java.util.Map;
 public class AddressController {
 
     private final AddressRepository addressRepository;
-
-    @org.springframework.beans.factory.annotation.Value("${app.max-addresses-per-user:10}")
-    private int maxAddresses;
+    private final SettingsService settingsService;
 
     @GetMapping
     public ResponseEntity<List<Address>> list(Authentication auth) {
@@ -29,6 +28,7 @@ public class AddressController {
     public ResponseEntity<?> create(@RequestBody Map<String, String> body, Authentication auth) {
         String userId = auth.getName();
 
+        int maxAddresses = settingsService.getInt("max_addresses_per_user");
         if (addressRepository.countByUserId(userId) >= maxAddresses) {
             return ResponseEntity.badRequest().body(Map.of("error", "Maximum " + maxAddresses + " addresses allowed"));
         }

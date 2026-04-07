@@ -24,17 +24,9 @@ public class OrderService {
     private final CartService cartService;
     private final ProductService productService;
     private final RazorpayService razorpayService;
+    private final SettingsService settingsService;
 
-    private static final long FREE_SHIPPING_THRESHOLD = 99900L;
-    private static final long SHIPPING_COST = 9900L;
     private static final int PAYMENT_TIMEOUT_MINUTES = 30;
-
-    /**
-     * Step 1: Create order with PENDING_PAYMENT status.
-     * Stock is NOT decremented — only validated.
-     * Stock gets decremented only when payment is confirmed.
-     */
-    private static final int MAX_PENDING_ORDERS = 3;
 
     @Transactional
     public Order createOrderFromItems(List<Map<String, Object>> items, String customerName,
@@ -43,14 +35,15 @@ public class OrderService {
             throw new IllegalStateException("No items provided");
         }
 
-        // Prevent spam: max 3 pending orders per customer (by email or phone)
+        // Prevent spam: max pending orders per customer (by email or phone)
+        int maxPending = settingsService.getInt("max_pending_orders");
         long pendingByPhone = orderRepository.countByCustomerPhoneAndStatus(customerPhone, Order.OrderStatus.PENDING_PAYMENT);
-        if (pendingByPhone >= MAX_PENDING_ORDERS) {
+        if (pendingByPhone >= maxPending) {
             throw new IllegalStateException("Too many pending orders. Complete or wait for existing orders to expire.");
         }
         if (customerEmail != null) {
             long pendingByEmail = orderRepository.countByCustomerEmailAndStatus(customerEmail, Order.OrderStatus.PENDING_PAYMENT);
-            if (pendingByEmail >= MAX_PENDING_ORDERS) {
+            if (pendingByEmail >= maxPending) {
                 throw new IllegalStateException("Too many pending orders. Complete or wait for existing orders to expire.");
             }
         }
@@ -101,7 +94,7 @@ public class OrderService {
             order.getItems().add(orderItem);
         }
 
-        long shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+        long shippingCost = subtotal >= settingsService.getLong("free_shipping_threshold") ? 0 : settingsService.getLong("shipping_cost");
         long totalAmount = subtotal + gstAmount + shippingCost;
 
         order.setSubtotal(subtotal);
@@ -155,7 +148,7 @@ public class OrderService {
             order.addItem(orderItem);
         }
 
-        long shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+        long shippingCost = subtotal >= settingsService.getLong("free_shipping_threshold") ? 0 : settingsService.getLong("shipping_cost");
         long totalAmount = subtotal + gstAmount + shippingCost;
 
         order.setSubtotal(subtotal);
