@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="001-create-schema" author="homebase_db">
+        <sql>CREATE SCHEMA IF NOT EXISTS homebase_db;</sql>
+    </changeSet>
+
+    <changeSet id="001-create-products-table" author="homebase_db">
+        <createTable tableName="products" schemaName="homebase_db">
+            <column name="id" type="VARCHAR(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="category" type="VARCHAR(30)" defaultValue="SAREE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fabric" type="VARCHAR(20)"/>
+            <column name="weave_type" type="VARCHAR(30)"/>
+            <column name="color" type="VARCHAR(50)"/>
+            <column name="size" type="VARCHAR(50)"/>
+            <column name="length_meters" type="DOUBLE"/>
+            <column name="blouse_piece" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="mrp" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="selling_price" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="discount_pct" type="INT"/>
+            <column name="stock" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="images" type="JSONB"/>
+            <column name="video_url" type="VARCHAR(1000)"/>
+            <column name="hsn_code" type="VARCHAR(20)" defaultValue="50079090">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gst_pct" type="INT" defaultValueNumeric="5">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_time" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="products" schemaName="homebase_db" indexName="idx_products_category">
+            <column name="category"/>
+        </createIndex>
+        <createIndex tableName="products" schemaName="homebase_db" indexName="idx_products_fabric">
+            <column name="fabric"/>
+        </createIndex>
+        <createIndex tableName="products" schemaName="homebase_db" indexName="idx_products_weave_type">
+            <column name="weave_type"/>
+        </createIndex>
+        <createIndex tableName="products" schemaName="homebase_db" indexName="idx_products_is_active">
+            <column name="is_active"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="001-create-cart-items-table" author="homebase_db">
+        <createTable tableName="cart_items" schemaName="homebase_db">
+            <column name="id" type="VARCHAR(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="session_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="added_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="cart_items" schemaName="homebase_db" indexName="idx_cart_items_session_id">
+            <column name="session_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="001-create-orders-table" author="homebase_db">
+        <createTable tableName="orders" schemaName="homebase_db">
+            <column name="id" type="VARCHAR(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_number" type="VARCHAR(40)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="customer_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="customer_phone" type="VARCHAR(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="customer_email" type="VARCHAR(255)"/>
+            <column name="shipping_address" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subtotal" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gst_amount" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="shipping_cost" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_amount" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payment_id" type="VARCHAR(255)"/>
+            <column name="payment_status" type="VARCHAR(30)"/>
+            <column name="razorpay_order_id" type="VARCHAR(50)"/>
+            <column name="razorpay_payment_id" type="VARCHAR(50)"/>
+            <column name="payment_method" type="VARCHAR(30)"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="PLACED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tracking_number" type="VARCHAR(50)"/>
+            <column name="created_time" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="orders" schemaName="homebase_db" indexName="idx_orders_order_number" unique="true">
+            <column name="order_number"/>
+        </createIndex>
+        <createIndex tableName="orders" schemaName="homebase_db" indexName="idx_orders_customer_email">
+            <column name="customer_email"/>
+        </createIndex>
+        <createIndex tableName="orders" schemaName="homebase_db" indexName="idx_orders_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="001-create-order-items-table" author="homebase_db">
+        <createTable tableName="order_items" schemaName="homebase_db">
+            <column name="id" type="VARCHAR(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="VARCHAR(255)">
+                <constraints nullable="false" foreignKeyName="fk_order_items_order"
+                             references="homebase_db.orders(id)"/>
+            </column>
+            <column name="product_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unit_price" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_price" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="order_items" schemaName="homebase_db" indexName="idx_order_items_order_id">
+            <column name="order_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

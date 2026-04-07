@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="002-seed-products" author="homebase_db" context="!test">
+
+        <!-- 1. Pochampally Ikat Silk Saree - Royal Blue & Gold -->
+        <insert tableName="products" schemaName="homebase_db">
+            <column name="id" value="product-001"/>
+            <column name="name" value="Pochampally Ikat Silk Saree - Royal Blue &amp; Gold"/>
+            <column name="description" value="Handwoven pure silk Pochampally Ikat saree with intricate geometric patterns in royal blue and gold. Traditional tie-dye technique passed down through generations of Bhoodan Dhanunjaiah Handlooms weavers. Zari border with rich pallu."/>
+            <column name="category" value="SAREE"/>
+            <column name="fabric" value="SILK"/>
+            <column name="weave_type" value="IKAT"/>
+            <column name="color" value="Royal Blue"/>
+            <column name="length_meters" value="6.3"/>
+            <column name="blouse_piece" valueBoolean="true"/>
+            <column name="mrp" value="1599900"/>
+            <column name="selling_price" value="1399900"/>
+            <column name="discount_pct" value="12"/>
+            <column name="stock" value="8"/>
+            <column name="images" value='["homebase_db-ikat-royal-blue-1.jpg", "homebase_db-ikat-royal-blue-2.jpg"]'/>
+            <column name="hsn_code" value="50079090"/>
+            <column name="gst_pct" value="5"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="version" value="0"/>
+        </insert>
+
+        <!-- 2. Telia Rumal Double Ikat - Maroon -->
+        <insert tableName="products" schemaName="homebase_db">
+            <column name="id" value="product-002"/>
+            <column name="name" value="Telia Rumal Double Ikat - Maroon &amp; Black"/>
+            <column name="description" value="Authentic Telia Rumal double ikat saree in deep maroon and black. This GI-tagged textile uses oil-treated yarn for a distinctive sheen. Traditional geometric and floral motifs. A collector's piece from Pochampally."/>
+            <column name="category" value="SAREE"/>
+            <column name="fabric" value="SILK"/>
+            <column name="weave_type" value="TELIA_RUMAL"/>
+            <column name="color" value="Maroon"/>
+            <column name="length_meters" value="6.3"/>
+            <column name="blouse_piece" valueBoolean="true"/>
+            <column name="mrp" value="1299900"/>
+            <column name="selling_price" value="1099900"/>
+            <column name="discount_pct" value="15"/>
+            <column name="stock" value="5"/>
+            <column name="images" value='["telia-rumal-maroon-1.jpg", "telia-rumal-maroon-2.jpg"]'/>
+            <column name="hsn_code" value="50079090"/>
+            <column name="gst_pct" value="5"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="version" value="0"/>
+        </insert>
+
+        <!-- 3. Pochampally Cotton Ikat - Yellow & Red -->
+        <insert tableName="products" schemaName="homebase_db">
+            <column name="id" value="product-003"/>
+            <column name="name" value="Pochampally Cotton Ikat - Yellow &amp; Red"/>
+            <column name="description" value="Lightweight pure cotton Pochampally Ikat saree in vibrant yellow with red geometric patterns. Perfect for daily wear and summer. Handwoven on traditional pit looms. Breathable and comfortable."/>
+            <column name="category" value="SAREE"/>
+            <column name="fabric" value="COTTON"/>
+            <column name="weave_type" value="IKAT"/>
+            <column name="color" value="Yellow"/>
+            <column name="length_meters" value="6.0"/>
+            <column name="blouse_piece" valueBoolean="true"/>
+            <column name="mrp" value="349900"/>
+            <column name="selling_price" value="299900"/>
+            <column name="discount_pct" value="14"/>
+            <column name="stock" value="15"/>
+            <column name="images" value='["cotton-ikat-yellow-1.jpg", "cotton-ikat-yellow-2.jpg"]'/>
+            <column name="hsn_code" value="50079090"/>
+            <column name="gst_pct" value="5"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="version" value="0"/>
+        </insert>
+
+        <!-- 4. Pochampally Silk Cotton Ikat - Green & Cream -->
+        <insert tableName="products" schemaName="homebase_db">
+            <column name="id" value="product-004"/>
+            <column name="name" value="Pochampally Silk Cotton Ikat - Green &amp; Cream"/>
+            <column name="description" value="Beautiful silk-cotton blend Pochampally Ikat saree in forest green and cream. Combines the elegance of silk with the comfort of cotton. Diamond and arrow motifs with contrast pallu."/>
+            <column name="category" value="SAREE"/>
+            <column name="fabric" value="SILK_COTTON"/>
+            <column name="weave_type" value="IKAT"/>
+            <column name="color" value="Green"/>
+            <column name="length_meters" value="6.3"/>
+            <column name="blouse_piece" valueBoolean="true"/>
+            <column name="mrp" value="599900"/>
+            <column name="selling_price" value="499900"/>
+            <column name="discount_pct" value="17"/>
+            <column name="stock" value="12"/>
+            <column name="images" value='["silk-cotton-green-1.jpg", "silk-cotton-green-2.jpg"]'/>
+            <column name="hsn_code" value="50079090"/>
+            <column name="gst_pct" value="5"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="version" value="0"/>
+        </insert>
+
+        <!-- 5. Pochampally Ikat Silk - Pink & White -->
+        <insert tableName="products" schemaName="homebase_db">
+            <column name="id" value="product-005"/>
+            <column name="name" value="Pochampally Ikat Silk - Pink &amp; White"/>
+            <column name="description" value="Elegant pure silk Pochampally Ikat saree in soft pink and white. Delicate floral ikat patterns with silver zari border. Ideal for weddings and festive occasions. Comes with matching blouse piece."/>
+            <column name="category" value="SAREE"/>
+            <column name="fabric" value="SILK"/>
+            <column name="weave_type" value="IKAT"/>
+            <column name="color" value="Pink"/>
+            <column name="length_meters" value="6.3"/>
+            <column name="blouse_piece" valueBoolean="true"/>
+            <column name="mrp" value="1199900"/>
+            <column name="selling_price" value="999900"/>
+            <column name="discount_pct" value="17"/>
+            <column name="stock" value="7"/>
+            <column name="images" value='["ikat-silk-pink-1.jpg", "ikat-silk-pink-2.jpg"]'/>
+            <column name="hsn_code" value="50079090"/>
+            <column name="gst_pct" value="5"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="version" value="0"/>
+        </insert>
+
+        <!-- 6. Pochampally Mercerized Cotton - Navy Blue -->
+        <insert tableName="products" schemaName="homebase_db">
+            <column name="id" value="product-006"/>
+            <column name="name" value="Pochampally Mercerized Cotton - Navy Blue"/>
+            <column name="description" value="Premium mercerized cotton saree from Pochampally in deep navy blue. Mercerization gives cotton a silky lustre and improved dye absorption. Geometric ikat patterns with contrasting orange border."/>
+            <column name="category" value="SAREE"/>
+            <column name="fabric" value="COTTON"/>
+            <column name="weave_type" value="MERCERIZED"/>
+            <column name="color" value="Navy Blue"/>
+            <column name="length_meters" value="6.0"/>
+            <column name="blouse_piece" valueBoolean="true"/>
+            <column name="mrp" value="449900"/>
+            <column name="selling_price" value="399900"/>
+            <column name="discount_pct" value="11"/>
+            <column name="stock" value="20"/>
+            <column name="images" value='["mercerized-navy-1.jpg", "mercerized-navy-2.jpg"]'/>
+            <column name="hsn_code" value="50079090"/>
+            <column name="gst_pct" value="5"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="version" value="0"/>
+        </insert>
+
+        <!-- 7. Pochampally Ikat Silk - Orange & Purple -->
+        <insert tableName="products" schemaName="homebase_db">
+            <column name="id" value="product-007"/>
+            <column name="name" value="Pochampally Ikat Silk - Orange &amp; Purple"/>
+            <column name="description" value="Vibrant pure silk Pochampally Ikat saree in bright orange with purple accents. Bold diamond patterns characteristic of Pochampally weaving tradition. Heavy zari work on pallu and border. Statement piece for special occasions."/>
+            <column name="category" value="SAREE"/>
+            <column name="fabric" value="SILK"/>
+            <column name="weave_type" value="IKAT"/>
+            <column name="color" value="Orange"/>
+            <column name="length_meters" value="6.3"/>
+            <column name="blouse_piece" valueBoolean="true"/>
+            <column name="mrp" value="1099900"/>
+            <column name="selling_price" value="899900"/>
+            <column name="discount_pct" value="18"/>
+            <column name="stock" value="6"/>
+            <column name="images" value='["ikat-silk-orange-1.jpg", "ikat-silk-orange-2.jpg"]'/>
+            <column name="hsn_code" value="50079090"/>
+            <column name="gst_pct" value="5"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="version" value="0"/>
+        </insert>
+
+        <!-- 8. Pochampally Cotton Ikat - White & Black -->
+        <insert tableName="products" schemaName="homebase_db">
+            <column name="id" value="product-008"/>
+            <column name="name" value="Pochampally Cotton Ikat - White &amp; Black"/>
+            <column name="description" value="Classic monochrome Pochampally cotton Ikat saree in white and black. Timeless zigzag and chevron patterns. Versatile for office wear and casual outings. Easy to maintain and drapes beautifully."/>
+            <column name="category" value="SAREE"/>
+            <column name="fabric" value="COTTON"/>
+            <column name="weave_type" value="IKAT"/>
+            <column name="color" value="White"/>
+            <column name="length_meters" value="6.0"/>
+            <column name="blouse_piece" valueBoolean="true"/>
+            <column name="mrp" value="299900"/>
+            <column name="selling_price" value="249900"/>
+            <column name="discount_pct" value="17"/>
+            <column name="stock" value="18"/>
+            <column name="images" value='["cotton-ikat-white-1.jpg", "cotton-ikat-white-2.jpg"]'/>
+            <column name="hsn_code" value="50079090"/>
+            <column name="gst_pct" value="5"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="version" value="0"/>
+        </insert>
+
+        <!-- 9. Telia Rumal Silk - Red & White -->
+        <insert tableName="products" schemaName="homebase_db">
+            <column name="id" value="product-009"/>
+            <column name="name" value="Telia Rumal Silk - Red &amp; White"/>
+            <column name="description" value="Traditional Telia Rumal silk saree in auspicious red and white. Double ikat technique creates identical patterns on both sides. Oil-treated threads give unique texture and durability. Heirloom quality craftsmanship."/>
+            <column name="category" value="SAREE"/>
+            <column name="fabric" value="SILK"/>
+            <column name="weave_type" value="TELIA_RUMAL"/>
+            <column name="color" value="Red"/>
+            <column name="length_meters" value="6.3"/>
+            <column name="blouse_piece" valueBoolean="true"/>
+            <column name="mrp" value="1499900"/>
+            <column name="selling_price" value="1249900"/>
+            <column name="discount_pct" value="17"/>
+            <column name="stock" value="5"/>
+            <column name="images" value='["telia-rumal-red-1.jpg", "telia-rumal-red-2.jpg"]'/>
+            <column name="hsn_code" value="50079090"/>
+            <column name="gst_pct" value="5"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="version" value="0"/>
+        </insert>
+
+        <!-- 10. Pochampally Silk Cotton - Magenta & Gold -->
+        <insert tableName="products" schemaName="homebase_db">
+            <column name="id" value="product-010"/>
+            <column name="name" value="Pochampally Silk Cotton - Magenta &amp; Gold"/>
+            <column name="description" value="Stunning silk-cotton blend saree in rich magenta with gold ikat patterns. Perfect blend of luxury and comfort for festive wear. Traditional Pochampally motifs with modern color palette. Lightweight yet looks opulent."/>
+            <column name="category" value="SAREE"/>
+            <column name="fabric" value="SILK_COTTON"/>
+            <column name="weave_type" value="IKAT"/>
+            <column name="color" value="Magenta"/>
+            <column name="length_meters" value="6.3"/>
+            <column name="blouse_piece" valueBoolean="true"/>
+            <column name="mrp" value="699900"/>
+            <column name="selling_price" value="599900"/>
+            <column name="discount_pct" value="14"/>
+            <column name="stock" value="10"/>
+            <column name="images" value='["silk-cotton-magenta-1.jpg", "silk-cotton-magenta-2.jpg"]'/>
+            <column name="hsn_code" value="50079090"/>
+            <column name="gst_pct" value="5"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="version" value="0"/>
+        </insert>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,41 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;INIT=CREATE SCHEMA IF NOT EXISTS homebase_db
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: false
+  liquibase:
+    enabled: false
+
+server:
+  port: 0
+
+app:
+  jwt-secret: bdd-test-secret-key-256-bits-long-enough-for-hmac-sha512-algorithm
+  cors-origins: http://localhost:3000
+  frontend-url: http://localhost:3000
+
+razorpay:
+  key-id: rzp_test_fake
+  key-secret: fake_secret_for_tests
+  webhook-secret: fake_webhook_secret
+
+cloudflare:
+  r2:
+    account-id: test
+    access-key: test
+    secret-key: test
+    bucket-name: test
+    public-domain: test.r2.dev
+
+logging:
+  level:
+    root: WARN
+    com.homebase_db: WARN
