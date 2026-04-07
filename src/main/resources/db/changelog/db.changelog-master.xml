@@ -16,5 +16,6 @@
     <include file="db/changelog/009-add-rich-product-attributes.xml"/>
     <include file="db/changelog/010-migrate-color-to-body-color.xml"/>
     <include file="db/changelog/011-make-sku-not-null.xml"/>
+    <include file="db/changelog/012-create-banners-and-categories.xml"/>
 
 </databaseChangeLog>
