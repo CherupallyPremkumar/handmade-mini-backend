@@ -54,6 +54,8 @@ public class World {
         cartItems.deleteAll();
         products.deleteAll();
         users.deleteAll();
+
+        // Settings are seeded by SettingsService.seedFromJson() @PostConstruct from db/seed/app-settings.json
     }
 
     @Before(order = 1)
@@ -200,6 +202,8 @@ public class World {
         for (Map<String, String> row : rows) {
             Product p = Product.builder()
                     .name(row.get("name"))
+                    .description(row.getOrDefault("description", "A beautiful handwoven Pochampally Ikat saree with traditional patterns"))
+                    .secondaryDescription(row.getOrDefault("secondaryDescription", "Perfect for weddings, festivals, and special occasions. Dry clean recommended."))
                     .fabric(Product.Fabric.valueOf(row.get("fabric")))
                     .weaveType(Product.WeaveType.valueOf(row.get("weaveType")))
                     .color(row.get("color"))

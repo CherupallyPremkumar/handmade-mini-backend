@@ -1,0 +1,47 @@
+[
+  {
+    "key": "max_addresses_per_user",
+    "value": "10",
+    "description": "Maximum saved addresses per customer"
+  },
+  {
+    "key": "max_pending_orders",
+    "value": "3",
+    "description": "Maximum pending orders per customer"
+  },
+  {
+    "key": "free_shipping_threshold",
+    "value": "99900",
+    "description": "Free shipping above this amount (in paisa)"
+  },
+  {
+    "key": "shipping_cost",
+    "value": "9900",
+    "description": "Flat shipping cost in paisa"
+  },
+  {
+    "key": "min_product_images",
+    "value": "3",
+    "description": "Minimum images required per product"
+  },
+  {
+    "key": "min_product_videos",
+    "value": "1",
+    "description": "Minimum videos required per product"
+  },
+  {
+    "key": "require_product_description",
+    "value": "true",
+    "description": "Product description is mandatory"
+  },
+  {
+    "key": "require_secondary_description",
+    "value": "true",
+    "description": "Secondary description is mandatory (helps customers decide)"
+  },
+  {
+    "key": "min_description_length",
+    "value": "50",
+    "description": "Minimum characters for product description"
+  }
+]

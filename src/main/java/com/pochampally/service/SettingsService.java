@@ -1,50 +1,82 @@
 package com.pochampally.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pochampally.entity.AppSetting;
 import com.pochampally.repository.AppSettingRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SettingsService {
 
     private final AppSettingRepository settingRepository;
+    private final ObjectMapper objectMapper;
 
-    private static final Map<String, String> DEFAULTS = Map.ofEntries(
-            Map.entry("max_addresses_per_user", "10"),
-            Map.entry("max_pending_orders", "3"),
-            Map.entry("free_shipping_threshold", "99900"),
-            Map.entry("shipping_cost", "9900"),
-            Map.entry("min_product_images", "3"),
-            Map.entry("min_product_videos", "1"),
-            Map.entry("require_product_description", "true"),
-            Map.entry("require_secondary_description", "true")
-    );
+    /**
+     * On startup, seed any missing settings from db/seed/app-settings.json.
+     * Already-existing keys are NOT overwritten — admin changes are preserved.
+     */
+    @PostConstruct
+    @Transactional
+    public void seedFromJson() {
+        try {
+            InputStream is = new ClassPathResource("db/seed/app-settings.json").getInputStream();
+            List<Map<String, String>> seeds = objectMapper.readValue(is, new TypeReference<>() {});
+
+            int seeded = 0;
+            for (Map<String, String> seed : seeds) {
+                String key = seed.get("key");
+                if (!settingRepository.existsById(key)) {
+                    settingRepository.save(AppSetting.builder()
+                            .key(key)
+                            .value(seed.get("value"))
+                            .description(seed.get("description"))
+                            .build());
+                    seeded++;
+                }
+            }
+            if (seeded > 0) {
+                log.info("Seeded {} missing app settings from JSON", seeded);
+            }
+        } catch (Exception e) {
+            log.warn("Could not seed app settings from JSON: {}", e.getMessage());
+        }
+    }
 
     public String get(String key) {
         return settingRepository.findById(key)
                 .map(AppSetting::getValue)
-                .orElse(DEFAULTS.getOrDefault(key, ""));
+                .orElse("");
     }
 
     public int getInt(String key) {
+        String val = get(key);
+        if (val.isEmpty()) return 0;
         try {
-            return Integer.parseInt(get(key));
+            return Integer.parseInt(val);
         } catch (NumberFormatException e) {
-            return Integer.parseInt(DEFAULTS.getOrDefault(key, "0"));
+            return 0;
         }
     }
 
     public long getLong(String key) {
+        String val = get(key);
+        if (val.isEmpty()) return 0;
         try {
-            return Long.parseLong(get(key));
+            return Long.parseLong(val);
         } catch (NumberFormatException e) {
-            return Long.parseLong(DEFAULTS.getOrDefault(key, "0"));
+            return 0;
         }
     }
 
