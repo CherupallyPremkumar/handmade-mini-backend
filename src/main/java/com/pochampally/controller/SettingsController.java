@@ -21,6 +21,16 @@ public class SettingsController {
         return ResponseEntity.ok(settingsService.getAll());
     }
 
+    @GetMapping("/product-rules")
+    public ResponseEntity<Map<String, Object>> getProductRules() {
+        return ResponseEntity.ok(Map.of(
+                "minImages", settingsService.getInt("min_product_images"),
+                "minVideos", settingsService.getInt("min_product_videos"),
+                "requireDescription", "true".equals(settingsService.get("require_product_description")),
+                "requireSecondaryDescription", "true".equals(settingsService.get("require_secondary_description"))
+        ));
+    }
+
     @PutMapping("/{key}")
     public ResponseEntity<AppSetting> update(@PathVariable String key, @RequestBody Map<String, String> body) {
         String value = body.get("value");

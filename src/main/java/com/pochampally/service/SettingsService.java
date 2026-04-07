@@ -15,11 +15,15 @@ public class SettingsService {
 
     private final AppSettingRepository settingRepository;
 
-    private static final Map<String, String> DEFAULTS = Map.of(
-            "max_addresses_per_user", "10",
-            "max_pending_orders", "3",
-            "free_shipping_threshold", "99900",
-            "shipping_cost", "9900"
+    private static final Map<String, String> DEFAULTS = Map.ofEntries(
+            Map.entry("max_addresses_per_user", "10"),
+            Map.entry("max_pending_orders", "3"),
+            Map.entry("free_shipping_threshold", "99900"),
+            Map.entry("shipping_cost", "9900"),
+            Map.entry("min_product_images", "3"),
+            Map.entry("min_product_videos", "1"),
+            Map.entry("require_product_description", "true"),
+            Map.entry("require_secondary_description", "true")
     );
 
     public String get(String key) {

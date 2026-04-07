@@ -33,6 +33,9 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "secondary_description", columnDefinition = "TEXT")
+    private String secondaryDescription;
+
     // Clothing category
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)

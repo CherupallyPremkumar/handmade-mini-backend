@@ -58,6 +58,7 @@ public class ProductService {
         Product existing = getById(id);
         existing.setName(updates.getName());
         existing.setDescription(updates.getDescription());
+        existing.setSecondaryDescription(updates.getSecondaryDescription());
         existing.setCategory(updates.getCategory());
         existing.setFabric(updates.getFabric());
         existing.setWeaveType(updates.getWeaveType());
