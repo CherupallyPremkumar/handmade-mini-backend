@@ -18,18 +18,24 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     @Query("UPDATE Product p SET p.stock = p.stock + :qty WHERE p.id = :id")
     void incrementStock(@Param("id") String id, @Param("qty") int qty);
 
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isDeleted = false")
     List<Product> findByIsActiveTrue();
 
-    List<Product> findByFabricAndIsActiveTrue(Product.Fabric fabric);
+    @Query("SELECT p FROM Product p WHERE p.fabric = :fabric AND p.isActive = true AND p.isDeleted = false")
+    List<Product> findByFabricAndIsActiveTrue(@Param("fabric") Product.Fabric fabric);
 
-    List<Product> findByWeaveTypeAndIsActiveTrue(Product.WeaveType weaveType);
+    @Query("SELECT p FROM Product p WHERE p.weaveType = :weaveType AND p.isActive = true AND p.isDeleted = false")
+    List<Product> findByWeaveTypeAndIsActiveTrue(@Param("weaveType") Product.WeaveType weaveType);
 
-    @Query("SELECT s FROM Product s WHERE s.isActive = true AND LOWER(s.name) LIKE LOWER(CONCAT('%', :query, '%'))")
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isDeleted = false AND LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Product> searchByNameContaining(@Param("query") String query);
 
-    @Query("SELECT s FROM Product s WHERE s.isActive = true AND s.sellingPrice BETWEEN :minPrice AND :maxPrice")
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isDeleted = false AND p.sellingPrice BETWEEN :minPrice AND :maxPrice")
     List<Product> findByPriceRange(@Param("minPrice") Long minPrice, @Param("maxPrice") Long maxPrice);
 
-    @Query("SELECT s FROM Product s WHERE s.isActive = true AND LOWER(s.color) = LOWER(:color)")
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isDeleted = false AND LOWER(p.color) = LOWER(:color)")
     List<Product> findByColorAndIsActiveTrue(@Param("color") String color);
+
+    @Query("SELECT p FROM Product p WHERE p.isDeleted = false")
+    List<Product> findAllNotDeleted();
 }

@@ -20,7 +20,7 @@ public class ProductService {
     }
 
     public List<Product> listAll() {
-        return productRepository.findAll();
+        return productRepository.findAllNotDeleted();
     }
 
     public Product getById(String id) {
@@ -87,6 +87,7 @@ public class ProductService {
     @Transactional
     public void softDelete(String id) {
         Product product = getById(id);
+        product.setIsDeleted(true);
         product.setIsActive(false);
         productRepository.save(product);
     }

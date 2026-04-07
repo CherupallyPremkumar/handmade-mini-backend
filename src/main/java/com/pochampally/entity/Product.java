@@ -99,6 +99,10 @@ public class Product {
     @Builder.Default
     private Boolean isActive = true;
 
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
     @Column(name = "created_time", nullable = false, updatable = false)
     private Instant createdTime;
 

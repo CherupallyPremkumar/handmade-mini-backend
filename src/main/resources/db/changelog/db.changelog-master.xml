@@ -11,5 +11,6 @@
     <include file="db/changelog/004-add-email-verification.xml"/>
     <include file="db/changelog/005-create-addresses.xml"/>
     <include file="db/changelog/006-create-app-settings.xml"/>
+    <include file="db/changelog/007-add-is-deleted-to-products.xml"/>
 
 </databaseChangeLog>
