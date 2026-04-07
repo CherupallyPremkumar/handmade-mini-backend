@@ -17,7 +17,8 @@ public class AddressController {
 
     private final AddressRepository addressRepository;
 
-    private static final int MAX_ADDRESSES = 10;
+    @org.springframework.beans.factory.annotation.Value("${app.max-addresses-per-user:10}")
+    private int maxAddresses;
 
     @GetMapping
     public ResponseEntity<List<Address>> list(Authentication auth) {
@@ -28,8 +29,8 @@ public class AddressController {
     public ResponseEntity<?> create(@RequestBody Map<String, String> body, Authentication auth) {
         String userId = auth.getName();
 
-        if (addressRepository.countByUserId(userId) >= MAX_ADDRESSES) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Maximum " + MAX_ADDRESSES + " addresses allowed"));
+        if (addressRepository.countByUserId(userId) >= maxAddresses) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Maximum " + maxAddresses + " addresses allowed"));
         }
 
         String name = body.get("name");
