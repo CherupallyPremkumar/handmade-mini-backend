@@ -22,19 +22,22 @@ jobs:
             cd /home/ec2-user/handmade-mini-backend
             git pull origin dev
             mvn clean package -DskipTests
-            # Kill existing app using PID file
+            # Kill existing app — try PID file first, then find by process
             if [ -f app.pid ]; then
               kill $(cat app.pid) 2>/dev/null || true
-              sleep 2
             fi
+            # Also kill any remaining java process running our jar
+            kill $(pgrep -f 'java.*pochampally-backend' | head -1) 2>/dev/null || true
+            sleep 3
             # Source env vars and start app
             source .env
             nohup java -Xmx512m -Xms256m -jar target/pochampally-backend-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
-            echo $! > app.pid
-            sleep 5
+            sleep 10
+            # Save the real PID by finding the running java process
+            pgrep -f 'java.*pochampally-backend' | head -1 > app.pid
             # Verify app started
-            if kill -0 $(cat app.pid) 2>/dev/null; then
-              echo "App started successfully"
+            if [ -s app.pid ] && kill -0 $(cat app.pid) 2>/dev/null; then
+              echo "App started successfully (PID: $(cat app.pid))"
             else
               echo "App failed to start. Last logs:"
               tail -20 app.log
