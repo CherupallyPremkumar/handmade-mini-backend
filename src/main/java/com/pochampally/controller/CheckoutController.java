@@ -23,13 +23,16 @@ public class CheckoutController {
     private final OrderService orderService;
     private final RazorpayService razorpayService;
     private final com.pochampally.service.AuthService authService;
+    private final com.pochampally.repository.AddressRepository addressRepository;
     private final com.pochampally.config.LoginRateLimiter paymentVerifyRateLimiter;
 
     public CheckoutController(OrderService orderService, RazorpayService razorpayService,
-                               com.pochampally.service.AuthService authService) {
+                               com.pochampally.service.AuthService authService,
+                               com.pochampally.repository.AddressRepository addressRepository) {
         this.orderService = orderService;
         this.razorpayService = razorpayService;
         this.authService = authService;
+        this.addressRepository = addressRepository;
         this.paymentVerifyRateLimiter = new com.pochampally.config.LoginRateLimiter();
     }
 
@@ -77,9 +80,25 @@ public class CheckoutController {
         String customerEmail = req.getCustomerEmail();
         Map<String, String> shippingAddress = req.getShippingAddress();
 
+        // Resolve address from saved addressId if provided
+        if (req.getAddressId() != null && !req.getAddressId().isBlank() && authentication != null) {
+            com.pochampally.entity.Address saved = addressRepository.findByIdAndUserId(
+                    req.getAddressId(), authentication.getName())
+                    .orElseThrow(() -> new IllegalArgumentException("Address not found"));
+            customerName = saved.getName();
+            customerPhone = saved.getPhone();
+            shippingAddress = Map.of(
+                    "line1", saved.getLine1(),
+                    "line2", saved.getLine2() != null ? saved.getLine2() : "",
+                    "city", saved.getCity(),
+                    "state", saved.getState(),
+                    "pincode", saved.getPincode()
+            );
+        }
+
         if (customerName == null || customerPhone == null || shippingAddress == null) {
             return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Missing required fields: customerName, customerPhone, shippingAddress"));
+                    "error", "Missing required fields: customerName, customerPhone, shippingAddress or addressId"));
         }
 
         // Validate shipping address has required fields

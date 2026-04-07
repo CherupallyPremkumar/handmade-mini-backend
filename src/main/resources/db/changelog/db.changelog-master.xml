@@ -9,5 +9,6 @@
     <include file="db/changelog/002-seed-products.xml"/>
     <include file="db/changelog/003-create-users.xml"/>
     <include file="db/changelog/004-add-email-verification.xml"/>
+    <include file="db/changelog/005-create-addresses.xml"/>
 
 </databaseChangeLog>
