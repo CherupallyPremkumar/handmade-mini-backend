@@ -16,6 +16,8 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            export JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto.x86_64
+            export PATH=$JAVA_HOME/bin:$PATH
             cd /home/ec2-user/handmade-mini-backend
             git pull origin dev
             mvn clean package -DskipTests
