@@ -4,11 +4,13 @@ import com.pochampally.entity.Banner;
 import com.pochampally.entity.Category;
 import com.pochampally.repository.BannerRepository;
 import com.pochampally.repository.CategoryRepository;
+import com.pochampally.service.ImageStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,6 +18,7 @@ public class CmsController {
 
     private final BannerRepository bannerRepository;
     private final CategoryRepository categoryRepository;
+    private final ImageStorageService imageStorageService;
 
     // ═══ Public: Storefront ═══
 
@@ -131,5 +134,28 @@ public class CmsController {
                 .orElseThrow(() -> new IllegalArgumentException("Category not found"));
         category.setIsActive(!category.getIsActive());
         return ResponseEntity.ok(categoryRepository.save(category));
+    }
+
+    // ═══ Admin: CMS Image Upload ═══
+
+    /**
+     * Generate presigned URL for CMS image upload (banners/categories).
+     * type: "banner" or "category"
+     */
+    @PostMapping("/api/admin/cms/presign-image")
+    public ResponseEntity<?> presignCmsImage(@RequestBody Map<String, String> body) {
+        String type = body.get("type");
+        String contentType = body.get("contentType");
+        String filename = body.get("filename");
+
+        if (type == null || contentType == null) {
+            throw new IllegalArgumentException("type and contentType required");
+        }
+        if (!"banner".equals(type) && !"category".equals(type)) {
+            throw new IllegalArgumentException("type must be 'banner' or 'category'");
+        }
+
+        var result = imageStorageService.generatePresignedCmsUrl(type, contentType, filename);
+        return ResponseEntity.ok(result);
     }
 }

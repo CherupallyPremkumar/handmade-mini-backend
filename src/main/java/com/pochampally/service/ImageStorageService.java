@@ -96,6 +96,36 @@ public class ImageStorageService {
         return Map.of("uploadUrl", presignedUrl, "cdnUrl", cdnUrl, "key", key);
     }
 
+    /**
+     * Generate presigned URL for CMS uploads (banners, categories).
+     * Stored under cms/banners/ or cms/categories/ in R2.
+     */
+    public Map<String, String> generatePresignedCmsUrl(String type, String contentType, String filename) {
+        if (!ALLOWED_IMAGE_TYPES.contains(contentType)) {
+            throw new IllegalArgumentException("Invalid image type: " + contentType + ". Allowed: JPEG, PNG, WebP");
+        }
+
+        String extension = extractExtension(filename);
+        String key = "cms/" + type + "s/" + UUID.randomUUID() + extension;
+        String cdnUrl = "https://" + publicDomain + "/" + key;
+
+        PutObjectRequest putRequest = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .contentType(contentType)
+                .build();
+
+        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(10))
+                .putObjectRequest(putRequest)
+                .build();
+
+        String presignedUrl = s3Presigner.presignPutObject(presignRequest).url().toString();
+
+        log.info("Generated presigned CMS URL for {}: {}", type, key);
+        return Map.of("uploadUrl", presignedUrl, "cdnUrl", cdnUrl, "key", key);
+    }
+
     /** Legacy: upload image through server (kept for backward compatibility) */
     public String uploadImage(MultipartFile file, String productId) {
         String key = "products/" + productId + "/" + UUID.randomUUID() + extractExtension(file.getOriginalFilename());
