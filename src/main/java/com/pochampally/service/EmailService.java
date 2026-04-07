@@ -1,16 +1,17 @@
 package com.pochampally.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.TreeMap;
@@ -32,6 +33,7 @@ public class EmailService {
     private final String region;
     private final String fromEmail;
     private final String frontendUrl;
+    private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
 
     public EmailService(
@@ -39,12 +41,14 @@ public class EmailService {
             @Value("${aws.ses.secret-key:}") String secretKey,
             @Value("${aws.ses.region:ap-south-1}") String region,
             @Value("${aws.ses.from-email:}") String fromEmail,
-            @Value("${app.frontend-url:https://dhanunjaiah.com}") String frontendUrl) {
+            @Value("${app.frontend-url:https://dhanunjaiah.com}") String frontendUrl,
+            ObjectMapper objectMapper) {
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         this.region = region;
         this.fromEmail = fromEmail;
         this.frontendUrl = frontendUrl;
+        this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newHttpClient();
     }
 
@@ -76,22 +80,18 @@ public class EmailService {
         String host = "email." + region + ".amazonaws.com";
         String endpoint = "https://" + host + "/v2/email/outbound-emails";
 
-        String payload = """
-                {
-                  "FromEmailAddress": "%s",
-                  "Destination": {"ToAddresses": ["%s"]},
-                  "Content": {
-                    "Simple": {
-                      "Subject": {"Data": "%s", "Charset": "UTF-8"},
-                      "Body": {"Html": {"Data": %s, "Charset": "UTF-8"}}
-                    }
-                  }
-                }
-                """.formatted(fromEmail, to, subject,
-                com.fasterxml.jackson.databind.ObjectMapper.class.getDeclaredConstructor().newInstance()
-                        .writeValueAsString(htmlBody));
+        // Build JSON payload safely via ObjectMapper — no string interpolation for user data
+        String escapedHtml = objectMapper.writeValueAsString(htmlBody);
+        String payload = objectMapper.writeValueAsString(Map.of(
+                "FromEmailAddress", fromEmail,
+                "Destination", Map.of("ToAddresses", new String[]{to}),
+                "Content", Map.of("Simple", Map.of(
+                        "Subject", Map.of("Data", subject, "Charset", "UTF-8"),
+                        "Body", Map.of("Html", Map.of("Data", htmlBody, "Charset", "UTF-8"))
+                ))
+        ));
 
-        ZonedDateTime now = ZonedDateTime.now(java.time.ZoneOffset.UTC);
+        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
         String amzDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'"));
         String dateStamp = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
@@ -136,7 +136,7 @@ public class EmailService {
     }
 
     private String buildVerificationHtml(String userName, String verifyUrl) {
-        String name = userName != null ? userName : "Customer";
+        String name = escapeHtml(userName != null ? userName : "Customer");
         return """
                 <!DOCTYPE html>
                 <html>
@@ -177,5 +177,10 @@ public class EmailService {
         byte[] kRegion = hmacSha256(kDate, region);
         byte[] kService = hmacSha256(kRegion, service);
         return hmacSha256(kService, "aws4_request");
+    }
+
+    private static String escapeHtml(String input) {
+        return input.replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace("\"", "&quot;");
     }
 }

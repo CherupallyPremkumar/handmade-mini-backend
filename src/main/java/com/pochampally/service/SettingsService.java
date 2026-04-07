@@ -12,8 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +24,13 @@ public class SettingsService {
 
     private final AppSettingRepository settingRepository;
     private final ObjectMapper objectMapper;
+
+    private static final long CACHE_TTL_SECONDS = 60;
+    private final ConcurrentHashMap<String, CachedValue> cache = new ConcurrentHashMap<>();
+
+    private record CachedValue(String value, Instant expiry) {
+        boolean isExpired() { return Instant.now().isAfter(expiry); }
+    }
 
     /**
      * On startup, seed any missing settings from db/seed/app-settings.json.
@@ -55,9 +64,17 @@ public class SettingsService {
     }
 
     public String get(String key) {
-        return settingRepository.findById(key)
+        CachedValue cached = cache.get(key);
+        if (cached != null && !cached.isExpired()) {
+            return cached.value();
+        }
+
+        String value = settingRepository.findById(key)
                 .map(AppSetting::getValue)
                 .orElse("");
+
+        cache.put(key, new CachedValue(value, Instant.now().plusSeconds(CACHE_TTL_SECONDS)));
+        return value;
     }
 
     public int getInt(String key) {
@@ -89,6 +106,8 @@ public class SettingsService {
         AppSetting setting = settingRepository.findById(key)
                 .orElseThrow(() -> new IllegalArgumentException("Setting not found: " + key));
         setting.setValue(value);
-        return settingRepository.save(setting);
+        AppSetting saved = settingRepository.save(setting);
+        cache.remove(key);
+        return saved;
     }
 }

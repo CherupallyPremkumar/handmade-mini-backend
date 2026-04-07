@@ -97,10 +97,27 @@ java -jar target/*.jar           # Run (all env vars must be set)
 | Orders | 15 | Tracking, status transitions, PII hidden, admin |
 | Webhooks | 11 | Signature verification, idempotency, stock decrement |
 
-## Branching
+## Branching & Deployment
 
-- `main` — production
-- `dev` — development
+- `main` — **PRODUCTION ONLY.** Never push directly. Only merge from `dev` when fully tested and ready for production. Real users are making real payments (Razorpay) — a bad deploy breaks revenue.
+- `dev` — **All development happens here.** Push freely. Auto-deploys to dev instances for testing.
+- **Do NOT create feature branches.** Work directly on `dev`. If you accidentally create one, merge it to `dev` immediately and delete it.
+- **Never touch `main`** unless explicitly told "merge to main" or "deploy to production."
+
+## Infrastructure
+
+| Environment | Service | URL / Host |
+|---|---|---|
+| **Production** | Frontend | dhanunjaiah.com (Vercel, auto-deploys from `main`) |
+| **Production** | Backend API | api.dhanunjaiah.com (AWS EC2 Mumbai) |
+| **Production** | Database | Supabase PostgreSQL (ap-south-1) |
+| **Dev** | Frontend | dev.dhanunjaiah.com (Vercel preview, auto-deploys from `dev`) |
+| **Dev** | Backend API | dev-api.dhanunjaiah.com (AWS EC2 Mumbai) |
+| **Dev** | Database | Supabase PostgreSQL (ap-south-1, separate dev instance) |
+| **Both** | Images/Videos | Cloudflare R2 (APAC) |
+| **Both** | Payments | Razorpay (test mode on dev, live on prod) |
+
+Two AWS EC2 instances in Mumbai — one for prod, one for dev. Backend deployed as a JAR.
 
 ## What NOT To Do
 

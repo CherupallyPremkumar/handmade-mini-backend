@@ -1,16 +1,23 @@
 package com.pochampally.controller;
 
+import com.pochampally.config.LoginRateLimiter;
 import com.pochampally.dto.CreateOrderRequest;
+import com.pochampally.entity.Address;
 import com.pochampally.entity.Order;
+import com.pochampally.entity.User;
+import com.pochampally.service.AddressService;
+import com.pochampally.service.AuthService;
 import com.pochampally.service.OrderService;
 import com.pochampally.service.RazorpayService;
-import lombok.RequiredArgsConstructor;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpServletRequest;
-
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,52 +29,32 @@ public class CheckoutController {
 
     private final OrderService orderService;
     private final RazorpayService razorpayService;
-    private final com.pochampally.service.AuthService authService;
-    private final com.pochampally.repository.AddressRepository addressRepository;
-    private final com.pochampally.config.LoginRateLimiter paymentVerifyRateLimiter;
+    private final AuthService authService;
+    private final AddressService addressService;
+    private final LoginRateLimiter paymentVerifyRateLimiter;
+
+    @Value("${app.frontend-url:https://dhanunjaiah.com}")
+    private String frontendUrl;
 
     public CheckoutController(OrderService orderService, RazorpayService razorpayService,
-                               com.pochampally.service.AuthService authService,
-                               com.pochampally.repository.AddressRepository addressRepository) {
+                               AuthService authService, AddressService addressService) {
         this.orderService = orderService;
         this.razorpayService = razorpayService;
         this.authService = authService;
-        this.addressRepository = addressRepository;
-        this.paymentVerifyRateLimiter = new com.pochampally.config.LoginRateLimiter();
+        this.addressService = addressService;
+        this.paymentVerifyRateLimiter = new LoginRateLimiter();
     }
 
-    /** Visible for test reset only. */
-    public com.pochampally.config.LoginRateLimiter getPaymentVerifyRateLimiter() {
+    /** Visible for test cleanup. */
+    public LoginRateLimiter getPaymentVerifyRateLimiter() {
         return paymentVerifyRateLimiter;
     }
 
-    @org.springframework.beans.factory.annotation.Value("${app.frontend-url:https://dhanunjaiah.com}")
-    private String frontendUrl;
-
-    /**
-     * Step 1: Create order from cart and generate Razorpay order.
-     *
-     * Request body:
-     * {
-     *   "sessionId": "abc123",
-     *   "customerName": "John Doe",
-     *   "customerPhone": "9876543210",
-     *   "customerEmail": "john@example.com",
-     *   "shippingAddress": {
-     *     "line1": "123 Main St",
-     *     "line2": "Apt 4",
-     *     "city": "Hyderabad",
-     *     "state": "Telangana",
-     *     "pincode": "500001"
-     *   }
-     * }
-     */
     @PostMapping("/create-order")
     public ResponseEntity<Map<String, Object>> createOrder(@RequestBody CreateOrderRequest req,
-                                                            org.springframework.security.core.Authentication authentication) {
-        // Block checkout for unverified email
+                                                            Authentication authentication) {
         if (authentication != null) {
-            com.pochampally.entity.User user = authService.getUserById(authentication.getName());
+            User user = authService.getUserById(authentication.getName());
             if (!user.getEmailVerified()) {
                 return ResponseEntity.status(403).body(Map.of(
                         "error", "Please verify your email before placing an order.",
@@ -80,11 +67,9 @@ public class CheckoutController {
         String customerEmail = req.getCustomerEmail();
         Map<String, String> shippingAddress = req.getShippingAddress();
 
-        // Resolve address from saved addressId if provided
+        // Resolve from saved address
         if (req.getAddressId() != null && !req.getAddressId().isBlank() && authentication != null) {
-            com.pochampally.entity.Address saved = addressRepository.findByIdAndUserId(
-                    req.getAddressId(), authentication.getName())
-                    .orElseThrow(() -> new IllegalArgumentException("Address not found"));
+            Address saved = addressService.getByIdAndUser(req.getAddressId(), authentication.getName());
             customerName = saved.getName();
             customerPhone = saved.getPhone();
             shippingAddress = Map.of(
@@ -101,7 +86,7 @@ public class CheckoutController {
                     "error", "Missing required fields: customerName, customerPhone, shippingAddress or addressId"));
         }
 
-        // Validate shipping address has required fields
+        // Validate shipping address
         String addrLine1 = shippingAddress.get("line1");
         String addrCity = shippingAddress.get("city");
         String addrState = shippingAddress.get("state");
@@ -124,7 +109,7 @@ public class CheckoutController {
         if (req.getItems() != null && !req.getItems().isEmpty()) {
             List<Map<String, Object>> items = req.getItems().stream()
                     .map(i -> {
-                        java.util.HashMap<String, Object> m = new java.util.HashMap<>();
+                        HashMap<String, Object> m = new HashMap<>();
                         m.put("productId", i.getProductId());
                         m.put("quantity", i.getQuantity());
                         return (Map<String, Object>) m;
@@ -137,8 +122,6 @@ public class CheckoutController {
             return ResponseEntity.badRequest().body(Map.of("error", "Provide items or sessionId"));
         }
 
-        // Create Razorpay order + save ID in single flow
-        // If this fails, the order exists but has no Razorpay ID — will be cleaned up by expiry scheduler
         String razorpayOrderId;
         try {
             razorpayOrderId = razorpayService.createRazorpayOrder(order.getTotalAmount(), order.getOrderNumber());
@@ -164,16 +147,6 @@ public class CheckoutController {
         ));
     }
 
-    /**
-     * Step 2: Verify payment after Razorpay checkout completes.
-     *
-     * Request body:
-     * {
-     *   "razorpayOrderId": "order_xxx",
-     *   "razorpayPaymentId": "pay_xxx",
-     *   "razorpaySignature": "hmac_signature"
-     * }
-     */
     @PostMapping("/verify-payment")
     public ResponseEntity<Map<String, Object>> verifyPayment(@RequestBody Map<String, String> body,
                                                               HttpServletRequest request) {
@@ -214,14 +187,10 @@ public class CheckoutController {
                 "status", order.getStatus().name()));
     }
 
-    /**
-     * Razorpay redirect callback — receives POST after successful payment on hosted checkout.
-     * Verifies signature, marks order as paid, redirects to frontend order confirmation.
-     */
     @PostMapping(value = "/payment-callback", consumes = {
-            org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED_VALUE,
-            org.springframework.http.MediaType.APPLICATION_JSON_VALUE,
-            org.springframework.http.MediaType.ALL_VALUE
+            MediaType.APPLICATION_FORM_URLENCODED_VALUE,
+            MediaType.APPLICATION_JSON_VALUE,
+            MediaType.ALL_VALUE
     })
     public ResponseEntity<Void> paymentCallback(@RequestParam("razorpay_order_id") String razorpayOrderId,
                                                  @RequestParam("razorpay_payment_id") String razorpayPaymentId,
@@ -232,22 +201,19 @@ public class CheckoutController {
         if (valid) {
             Order order = orderService.markAsPaid(razorpayOrderId, razorpayPaymentId);
             log.info("Payment callback: Order {} marked PAID", order.getOrderNumber());
-            String redirectUrl = frontendUrl + "/order-confirmation/" + order.getOrderNumber();
-            return ResponseEntity.status(302).header("Location", redirectUrl).build();
+            return ResponseEntity.status(302).header("Location",
+                    frontendUrl + "/order-confirmation/" + order.getOrderNumber()).build();
         } else {
             log.warn("Payment callback: Invalid signature for {}", razorpayOrderId);
-            return ResponseEntity.status(302).header("Location", frontendUrl + "/checkout?error=payment_failed").build();
+            return ResponseEntity.status(302).header("Location",
+                    frontendUrl + "/checkout?error=payment_failed").build();
         }
     }
 
-    /**
-     * Razorpay redirects here via GET when payment fails on hosted checkout.
-     * Marks order as failed if razorpay_order_id is present, then redirects to frontend error page.
-     */
     @GetMapping("/payment-callback")
     public ResponseEntity<Void> paymentCallbackFailed(
             @RequestParam(value = "razorpay_order_id", required = false) String razorpayOrderId) {
-        log.warn("Payment callback: GET request — payment failed or user cancelled. Razorpay order: {}",
+        log.warn("Payment callback: GET — payment failed or cancelled. Razorpay order: {}",
                 razorpayOrderId != null ? razorpayOrderId : "unknown");
 
         if (razorpayOrderId != null && !razorpayOrderId.isBlank()) {
@@ -258,6 +224,7 @@ public class CheckoutController {
             }
         }
 
-        return ResponseEntity.status(302).header("Location", frontendUrl + "/checkout?error=payment_failed").build();
+        return ResponseEntity.status(302).header("Location",
+                frontendUrl + "/checkout?error=payment_failed").build();
     }
 }

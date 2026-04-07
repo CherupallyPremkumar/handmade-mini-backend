@@ -78,7 +78,16 @@ public class AuthController {
     }
 
     @PostMapping("/resend-verification")
-    public ResponseEntity<Map<String, String>> resendVerification(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, ?>> resendVerification(@RequestBody Map<String, String> body,
+                                                              HttpServletRequest httpRequest) {
+        String clientIp = resolveClientIp(httpRequest);
+        if (!loginRateLimiter.tryAcquire(clientIp)) {
+            long retryAfter = loginRateLimiter.retryAfterSeconds(clientIp);
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
+                    "error", "Too many requests. Try again in " + retryAfter + " seconds.",
+                    "retryAfterSeconds", retryAfter));
+        }
+
         String email = body.get("email");
         if (email == null || email.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
