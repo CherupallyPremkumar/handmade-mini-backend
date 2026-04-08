@@ -42,7 +42,16 @@ cloudflare:
     bucket: ${CF_R2_BUCKET:homebase_db-images}
     public-domain: ${CF_R2_PUBLIC_DOMAIN:localhost}
 
-# AWS SES Email
+# Email Provider (ses or resend) — switch via EMAIL_PROVIDER env var
+email:
+  provider: ${EMAIL_PROVIDER:resend}
+
+# Resend (default — works immediately, 3k emails/month free)
+resend:
+  api-key: ${RESEND_API_KEY:}
+  from-email: ${RESEND_FROM_EMAIL:}
+
+# AWS SES (alternative — needs production access approval)
 aws:
   ses:
     access-key: ${SES_ACCESS_KEY:}
