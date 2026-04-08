@@ -1,61 +1,55 @@
 package com.pochampally.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pochampally.service.email.EmailProvider;
+import com.pochampally.service.email.ResendProvider;
+import com.pochampally.service.email.SesProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
-import java.time.ZonedDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
-import java.util.TreeMap;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.security.MessageDigest;
-import java.util.HexFormat;
-
 /**
- * Sends emails via AWS SES v2 HTTP API (Signature V4).
- * No AWS SDK dependency needed — uses raw HTTP + HMAC signing.
+ * Email service using Strategy Pattern.
+ * Supports: SES, Resend. Switch via EMAIL_PROVIDER env var (ses/resend).
+ * No code change needed to switch providers — just change env vars.
  */
 @Service
 @Slf4j
 public class EmailService {
 
-    private final String accessKey;
-    private final String secretKey;
-    private final String region;
-    private final String fromEmail;
+    private final EmailProvider provider;
     private final String frontendUrl;
-    private final ObjectMapper objectMapper;
-    private final HttpClient httpClient;
 
     public EmailService(
-            @Value("${aws.ses.access-key:}") String accessKey,
-            @Value("${aws.ses.secret-key:}") String secretKey,
-            @Value("${aws.ses.region:ap-south-1}") String region,
-            @Value("${aws.ses.from-email:}") String fromEmail,
+            @Value("${email.provider:resend}") String providerName,
+            @Value("${aws.ses.access-key:}") String sesAccessKey,
+            @Value("${aws.ses.secret-key:}") String sesSecretKey,
+            @Value("${aws.ses.region:ap-south-1}") String sesRegion,
+            @Value("${aws.ses.from-email:}") String sesFromEmail,
+            @Value("${resend.api-key:}") String resendApiKey,
+            @Value("${resend.from-email:}") String resendFromEmail,
             @Value("${app.frontend-url:https://dhanunjaiah.com}") String frontendUrl,
             ObjectMapper objectMapper) {
-        this.accessKey = accessKey;
-        this.secretKey = secretKey;
-        this.region = region;
-        this.fromEmail = fromEmail;
         this.frontendUrl = frontendUrl;
-        this.objectMapper = objectMapper;
-        this.httpClient = HttpClient.newHttpClient();
+
+        if ("ses".equalsIgnoreCase(providerName) && !sesAccessKey.isBlank()) {
+            this.provider = new SesProvider(sesAccessKey, sesSecretKey, sesRegion, sesFromEmail, objectMapper);
+            log.info("Email provider: AWS SES ({})", sesRegion);
+        } else if (!resendApiKey.isBlank()) {
+            String from = resendFromEmail.isBlank() ? sesFromEmail : resendFromEmail;
+            this.provider = new ResendProvider(resendApiKey, from, objectMapper);
+            log.info("Email provider: Resend");
+        } else if (!sesAccessKey.isBlank()) {
+            this.provider = new SesProvider(sesAccessKey, sesSecretKey, sesRegion, sesFromEmail, objectMapper);
+            log.info("Email provider: AWS SES (fallback)");
+        } else {
+            this.provider = null;
+            log.warn("No email provider configured — emails will be skipped");
+        }
     }
 
     public boolean isConfigured() {
-        return accessKey != null && !accessKey.isBlank()
-                && secretKey != null && !secretKey.isBlank()
-                && fromEmail != null && !fromEmail.isBlank();
+        return provider != null && provider.isConfigured();
     }
 
     // ═══ Order Emails ═══
@@ -166,62 +160,7 @@ public class EmailService {
     }
 
     private void sendEmail(String to, String subject, String htmlBody) throws Exception {
-        String host = "email." + region + ".amazonaws.com";
-        String endpoint = "https://" + host + "/v2/email/outbound-emails";
-
-        // Build JSON payload safely via ObjectMapper — no string interpolation for user data
-        String escapedHtml = objectMapper.writeValueAsString(htmlBody);
-        String payload = objectMapper.writeValueAsString(Map.of(
-                "FromEmailAddress", fromEmail,
-                "Destination", Map.of("ToAddresses", new String[]{to}),
-                "Content", Map.of("Simple", Map.of(
-                        "Subject", Map.of("Data", subject, "Charset", "UTF-8"),
-                        "Body", Map.of("Html", Map.of("Data", htmlBody, "Charset", "UTF-8"))
-                ))
-        ));
-
-        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-        String amzDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'"));
-        String dateStamp = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-
-        String contentHash = sha256Hex(payload);
-
-        Map<String, String> headers = new TreeMap<>();
-        headers.put("host", host);
-        headers.put("x-amz-date", amzDate);
-        headers.put("content-type", "application/json");
-
-        String signedHeaders = String.join(";", headers.keySet());
-        StringBuilder canonicalHeaders = new StringBuilder();
-        headers.forEach((k, v) -> canonicalHeaders.append(k).append(":").append(v).append("\n"));
-
-        String canonicalRequest = "POST\n/v2/email/outbound-emails\n\n"
-                + canonicalHeaders + "\n" + signedHeaders + "\n" + contentHash;
-
-        String credentialScope = dateStamp + "/" + region + "/ses/aws4_request";
-        String stringToSign = "AWS4-HMAC-SHA256\n" + amzDate + "\n" + credentialScope + "\n"
-                + sha256Hex(canonicalRequest);
-
-        byte[] signingKey = getSignatureKey(secretKey, dateStamp, region, "ses");
-        String signature = HexFormat.of().formatHex(hmacSha256(signingKey, stringToSign));
-
-        String authHeader = "AWS4-HMAC-SHA256 Credential=" + accessKey + "/" + credentialScope
-                + ", SignedHeaders=" + signedHeaders + ", Signature=" + signature;
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(endpoint))
-                .header("Content-Type", "application/json")
-                .header("X-Amz-Date", amzDate)
-                .header("Authorization", authHeader)
-                .POST(HttpRequest.BodyPublishers.ofString(payload))
-                .build();
-
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() != 200) {
-            log.error("SES send failed. Status: {}, Body: {}", response.statusCode(), response.body());
-            throw new RuntimeException("SES email send failed: " + response.statusCode());
-        }
+        provider.send(to, subject, htmlBody);
     }
 
     private String buildVerificationHtml(String userName, String verifyUrl) {
@@ -246,26 +185,6 @@ public class EmailService {
                 </body>
                 </html>
                 """.formatted(name, verifyUrl);
-    }
-
-    private static String sha256Hex(String data) throws Exception {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
-        return HexFormat.of().formatHex(hash);
-    }
-
-    private static byte[] hmacSha256(byte[] key, String data) throws Exception {
-        Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(key, "HmacSHA256"));
-        return mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private static byte[] getSignatureKey(String key, String dateStamp, String region, String service) throws Exception {
-        byte[] kSecret = ("AWS4" + key).getBytes(StandardCharsets.UTF_8);
-        byte[] kDate = hmacSha256(kSecret, dateStamp);
-        byte[] kRegion = hmacSha256(kDate, region);
-        byte[] kService = hmacSha256(kRegion, service);
-        return hmacSha256(kService, "aws4_request");
     }
 
     private static String escapeHtml(String input) {
