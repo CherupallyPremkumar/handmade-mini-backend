@@ -5,6 +5,7 @@ import com.pochampally.entity.Category;
 import com.pochampally.repository.BannerRepository;
 import com.pochampally.repository.CategoryRepository;
 import com.pochampally.service.ImageStorageService;
+import com.pochampally.service.SettingsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class CmsController {
     private final BannerRepository bannerRepository;
     private final CategoryRepository categoryRepository;
     private final ImageStorageService imageStorageService;
-    private final com.pochampally.service.SettingsService settingsService;
+    private final SettingsService settingsService;
 
     // ═══ Public: Storefront ═══
 

@@ -76,6 +76,7 @@ public class SettingsService {
                             .name(cat.get("name"))
                             .slug(cat.get("slug"))
                             .description(cat.get("description"))
+                            .imageUrl(cat.getOrDefault("imageUrl", ""))
                             .filterKey(cat.getOrDefault("filterKey", ""))
                             .filterValue(cat.getOrDefault("filterValue", ""))
                             .position(pos++)
