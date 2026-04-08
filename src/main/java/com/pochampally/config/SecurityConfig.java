@@ -59,8 +59,9 @@ public class SecurityConfig {
                         // Public: payment webhooks
                         .requestMatchers("/api/webhooks/**").permitAll()
 
-                        // Public: CMS (banners, categories)
+                        // Public: CMS (banners, categories) + public settings
                         .requestMatchers(HttpMethod.GET, "/api/cms/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/settings/public").permitAll()
 
                         // Public: health check
                         .requestMatchers("/actuator/health").permitAll()

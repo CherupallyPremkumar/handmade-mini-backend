@@ -17,5 +17,10 @@
     <include file="db/changelog/010-migrate-color-to-body-color.xml"/>
     <include file="db/changelog/011-make-sku-not-null.xml"/>
     <include file="db/changelog/012-create-banners-and-categories.xml"/>
+    <include file="db/changelog/013-create-wishlist.xml"/>
+    <include file="db/changelog/014-create-coupons.xml"/>
+    <include file="db/changelog/015-create-reviews.xml"/>
+    <include file="db/changelog/016-add-order-item-tax-fields.xml"/>
+    <include file="db/changelog/017-abandoned-cart-support.xml"/>
 
 </databaseChangeLog>

@@ -25,6 +25,7 @@ public class OrderService {
     private final ProductService productService;
     private final RazorpayService razorpayService;
     private final SettingsService settingsService;
+    private final EmailService emailService;
 
     // Fallback only — real value from settingsService.getInt("payment_timeout_minutes")
 
@@ -228,7 +229,22 @@ public class OrderService {
         log.info("Order {} marked PAID. Stock decremented for {} items.",
                 order.getOrderNumber(), order.getItems().size());
 
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+
+        // Send order emails (non-blocking)
+        try {
+            if ("true".equals(settingsService.get("send_order_confirmation_email"))) {
+                emailService.sendOrderConfirmationEmail(saved);
+            }
+            String adminEmail = settingsService.get("admin_order_alert_email");
+            if (!adminEmail.isBlank()) {
+                emailService.sendAdminOrderAlertEmail(adminEmail, saved);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to send order emails for {}: {}", saved.getOrderNumber(), e.getMessage());
+        }
+
+        return saved;
     }
 
     @Transactional
@@ -319,7 +335,20 @@ public class OrderService {
             order.setTrackingNumber(trackingNumber);
         }
 
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+
+        // Send status update emails (non-blocking)
+        try {
+            if (newStatus == Order.OrderStatus.SHIPPED && "true".equals(settingsService.get("send_shipping_update_email"))) {
+                emailService.sendShippingUpdateEmail(saved);
+            } else if (newStatus == Order.OrderStatus.DELIVERED) {
+                emailService.sendDeliveryConfirmationEmail(saved);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to send status email for {}: {}", saved.getOrderNumber(), e.getMessage());
+        }
+
+        return saved;
     }
 
     @Transactional

@@ -50,6 +50,9 @@ public class User {
     @Column(name = "verification_token_expiry")
     private Instant verificationTokenExpiry;
 
+    @Column(name = "last_cart_reminder_sent")
+    private Instant lastCartReminderSent;
+
     @Column(name = "created_time", nullable = false, updatable = false)
     private Instant createdTime;
 

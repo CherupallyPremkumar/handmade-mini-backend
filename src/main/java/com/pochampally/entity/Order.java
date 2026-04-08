@@ -60,6 +60,13 @@ public class Order {
     @Column(name = "total_amount", nullable = false)
     private Long totalAmount;
 
+    @Column(name = "discount_amount")
+    @Builder.Default
+    private Long discountAmount = 0L;
+
+    @Column(name = "coupon_code", length = 30)
+    private String couponCode;
+
     @Column(name = "payment_id")
     private String paymentId;
 

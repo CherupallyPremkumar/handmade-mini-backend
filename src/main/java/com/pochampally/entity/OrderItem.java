@@ -36,4 +36,10 @@ public class OrderItem {
 
     @Column(name = "total_price", nullable = false)
     private Long totalPrice;
+
+    @Column(name = "gst_pct")
+    private Integer gstPct;
+
+    @Column(name = "hsn_code", length = 20)
+    private String hsnCode;
 }

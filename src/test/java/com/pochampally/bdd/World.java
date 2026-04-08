@@ -31,6 +31,10 @@ public class World {
     @Autowired OrderItemRepository orderItems;
     @Autowired CartItemRepository cartItems;
     @Autowired com.pochampally.repository.AddressRepository addresses;
+    @Autowired com.pochampally.repository.WishlistItemRepository wishlistItems;
+    @Autowired com.pochampally.repository.CouponRepository coupons;
+    @Autowired com.pochampally.repository.CouponUsageRepository couponUsages;
+    @Autowired com.pochampally.repository.ReviewRepository reviews;
     @Autowired com.pochampally.repository.BannerRepository banners;
     @Autowired com.pochampally.repository.CategoryRepository categories;
     @Autowired com.pochampally.repository.AppSettingRepository appSettings;
@@ -50,6 +54,10 @@ public class World {
     public void cleanDb() {
         rateLimiter.reset();
         checkoutController.getPaymentVerifyRateLimiter().reset();
+        reviews.deleteAll();
+        couponUsages.deleteAll();
+        coupons.deleteAll();
+        wishlistItems.deleteAll();
         banners.deleteAll();
         categories.deleteAll();
         addresses.deleteAll();
