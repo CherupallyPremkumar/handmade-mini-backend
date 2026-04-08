@@ -23,6 +23,7 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
     default-schema: homebase_db
+    contexts: ${LIQUIBASE_CONTEXTS:dev}
 
   servlet:
     multipart:

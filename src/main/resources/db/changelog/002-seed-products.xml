@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="002-seed-products" author="homebase_db" context="!test">
+    <changeSet id="002-seed-products" author="homebase_db" context="dev">
 
         <!-- 1. Pochampally Ikat Silk Saree - Royal Blue & Gold -->
         <insert tableName="products" schemaName="homebase_db">
