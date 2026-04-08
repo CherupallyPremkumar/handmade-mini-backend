@@ -37,7 +37,7 @@ public class EmailService {
             log.info("Email provider: AWS SES ({})", sesRegion);
         } else if (!resendApiKey.isBlank()) {
             String from = resendFromEmail.isBlank() ? sesFromEmail : resendFromEmail;
-            this.provider = new ResendProvider(resendApiKey, from);
+            this.provider = new ResendProvider(resendApiKey, from, objectMapper);
             log.info("Email provider: Resend");
         } else if (!sesAccessKey.isBlank()) {
             this.provider = new SesProvider(sesAccessKey, sesSecretKey, sesRegion, sesFromEmail, objectMapper);
