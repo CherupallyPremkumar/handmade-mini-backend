@@ -28,6 +28,17 @@ public class ProductService {
                 .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
     }
 
+    public List<Product> findRelated(String productId, int limit) {
+        Product product = getById(productId);
+        List<Product> candidates = productRepository.findByIsActiveTrue().stream()
+                .filter(p -> !p.getId().equals(productId))
+                .filter(p -> (product.getFabric() != null && product.getFabric().equals(p.getFabric())) ||
+                             (product.getWeaveType() != null && product.getWeaveType().equals(p.getWeaveType())))
+                .collect(java.util.stream.Collectors.toList());
+        java.util.Collections.shuffle(candidates);
+        return candidates.stream().limit(limit).toList();
+    }
+
     public Product getBySku(String sku) {
         return productRepository.findBySku(sku)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found for SKU: " + sku));

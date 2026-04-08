@@ -31,10 +31,14 @@
   {"key": "gst_number", "value": "", "description": "GST number displayed on invoices"},
   {"key": "return_policy_days", "value": "7", "description": "Days allowed for returns after delivery"},
 
+  {"key": "abandoned_cart_email_enabled", "value": "false", "description": "Send abandoned cart recovery emails"},
+  {"key": "abandoned_cart_email_hours", "value": "24", "description": "Hours before sending cart reminder email"},
+
   {"key": "send_order_confirmation_email", "value": "true", "description": "Email customer when order is placed"},
   {"key": "send_shipping_update_email", "value": "true", "description": "Email customer when order is shipped"},
   {"key": "admin_order_alert_email", "value": "", "description": "Email address for new order notifications (blank = disabled)"},
 
+  {"key": "max_wishlist_items", "value": "50", "description": "Maximum items in a user's wishlist"},
   {"key": "max_banners", "value": "10", "description": "Maximum number of banners allowed"},
   {"key": "banner_scroll_seconds", "value": "5", "description": "Seconds each banner is shown before auto-scrolling"}
 ]

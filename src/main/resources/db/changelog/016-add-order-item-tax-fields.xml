@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="016-add-tax-fields-to-order-items" author="homebase_db">
+        <addColumn tableName="order_items" schemaName="homebase_db">
+            <column name="gst_pct" type="INT"/>
+            <column name="hsn_code" type="VARCHAR(20)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

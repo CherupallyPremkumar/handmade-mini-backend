@@ -95,6 +95,14 @@ public class Product {
     @Builder.Default
     private Integer gstPct = 5;
 
+    // Ratings (cached from reviews)
+    @Column(name = "average_rating")
+    private Double averageRating;
+
+    @Column(name = "review_count")
+    @Builder.Default
+    private Integer reviewCount = 0;
+
     // Physical attributes
     @Column(name = "weight_grams")
     private Integer weightGrams;

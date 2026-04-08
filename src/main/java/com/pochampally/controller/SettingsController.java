@@ -10,18 +10,29 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/admin/settings")
 @RequiredArgsConstructor
 public class SettingsController {
 
     private final SettingsService settingsService;
 
-    @GetMapping
+    /** Public: non-sensitive settings for storefront */
+    @GetMapping("/api/settings/public")
+    public ResponseEntity<Map<String, String>> publicSettings() {
+        return ResponseEntity.ok(Map.of(
+                "store_name", settingsService.get("store_name"),
+                "support_email", settingsService.get("support_email"),
+                "support_phone", settingsService.get("support_phone"),
+                "whatsapp_number", settingsService.get("whatsapp_number"),
+                "return_policy_days", settingsService.get("return_policy_days")
+        ));
+    }
+
+    @GetMapping("/api/admin/settings")
     public ResponseEntity<List<AppSetting>> getAll() {
         return ResponseEntity.ok(settingsService.getAll());
     }
 
-    @GetMapping("/product-rules")
+    @GetMapping("/api/admin/settings/product-rules")
     public ResponseEntity<Map<String, Object>> getProductRules() {
         return ResponseEntity.ok(Map.of(
                 "minImages", settingsService.getInt("min_product_images"),
@@ -31,7 +42,7 @@ public class SettingsController {
         ));
     }
 
-    @PutMapping("/{key}")
+    @PutMapping("/api/admin/settings/{key}")
     public ResponseEntity<AppSetting> update(@PathVariable String key, @RequestBody Map<String, String> body) {
         String value = body.get("value");
         if (value == null || value.isBlank()) {

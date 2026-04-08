@@ -58,6 +58,24 @@ public class ProductController {
         return ResponseEntity.ok(productService.getBySku(sku));
     }
 
+    @GetMapping("/api/products/{id}/related")
+    public ResponseEntity<List<Product>> relatedProducts(@PathVariable String id,
+                                                          @RequestParam(defaultValue = "4") int limit) {
+        return ResponseEntity.ok(productService.findRelated(id, limit));
+    }
+
+    @GetMapping("/api/products/sitemap")
+    public ResponseEntity<List<java.util.Map<String, Object>>> sitemapData() {
+        return ResponseEntity.ok(productService.listActive().stream()
+                .map(p -> java.util.Map.<String, Object>of(
+                        "id", p.getId(),
+                        "sku", p.getSku() != null ? p.getSku() : "",
+                        "name", p.getName(),
+                        "createdTime", p.getCreatedTime().toString()
+                ))
+                .toList());
+    }
+
     // --- Admin endpoints ---
 
     @GetMapping("/api/admin/products")

@@ -539,6 +539,68 @@ public class Steps {
         w.get("/api/auth/verify-email?token=" + token);
     }
 
+    // ═══════════════════════════════════════════════
+    //  WISHLIST
+    // ═══════════════════════════════════════════════
+
+    @When("I add {string} to wishlist")
+    public void addToWishlist(String productName) throws Exception {
+        w.postAuth("/api/wishlist",
+                """
+                {"productId":"%s"}
+                """.formatted(w.productId(productName)));
+    }
+
+    @When("I remove {string} from wishlist")
+    public void removeFromWishlist(String productName) throws Exception {
+        w.deleteAuth("/api/wishlist/" + w.productId(productName));
+    }
+
+    @When("I check wishlist for {string}")
+    public void checkWishlist(String productName) throws Exception {
+        w.getAuth("/api/wishlist/check/" + w.productId(productName));
+    }
+
+    // ═══════════════════════════════════════════════
+    //  REVIEWS
+    // ═══════════════════════════════════════════════
+
+    @When("I GET reviews for {string}")
+    public void getReviews(String productName) throws Exception {
+        w.get("/api/products/" + w.productId(productName) + "/reviews");
+    }
+
+    @When("I GET review summary for {string}")
+    public void getReviewSummary(String productName) throws Exception {
+        w.get("/api/products/" + w.productId(productName) + "/reviews/summary");
+    }
+
+    @When("I submit review for {string} with rating {int} and comment {string}")
+    public void submitReview(String productName, int rating, String comment) throws Exception {
+        w.postAuth("/api/products/" + w.productId(productName) + "/reviews",
+                """
+                {"rating":%d,"title":"Test Review","comment":"%s"}
+                """.formatted(rating, comment));
+    }
+
+    // ═══════════════════════════════════════════════
+    //  RELATED PRODUCTS
+    // ═══════════════════════════════════════════════
+
+    @When("I GET related products for {string}")
+    public void getRelatedProducts(String productName) throws Exception {
+        w.get("/api/products/" + w.productId(productName) + "/related?limit=4");
+    }
+
+    // ═══════════════════════════════════════════════
+    //  INVOICE
+    // ═══════════════════════════════════════════════
+
+    @When("I GET order invoice with auth")
+    public void getOrderInvoice() throws Exception {
+        w.getAuth("/api/orders/" + w.savedOrderNumber + "/invoice");
+    }
+
     @When("I update product {string} with stale version")
     public void updateWithStaleVersion(String name) throws Exception {
         String id = w.productId(name);

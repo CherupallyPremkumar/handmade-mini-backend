@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="015-create-reviews-table" author="homebase_db">
+        <createTable tableName="reviews" schemaName="homebase_db">
+            <column name="id" type="VARCHAR(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rating" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)"/>
+            <column name="comment" type="TEXT"/>
+            <column name="reviewer_name" type="VARCHAR(200)"/>
+            <column name="is_verified" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_approved" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_time" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="reviews" schemaName="homebase_db"
+                             columnNames="user_id, product_id"
+                             constraintName="uk_review_user_product"/>
+        <createIndex tableName="reviews" schemaName="homebase_db" indexName="idx_reviews_product_id">
+            <column name="product_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="015-add-rating-to-products" author="homebase_db">
+        <addColumn tableName="products" schemaName="homebase_db">
+            <column name="average_rating" type="DOUBLE"/>
+            <column name="review_count" type="INT" defaultValueNumeric="0"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
