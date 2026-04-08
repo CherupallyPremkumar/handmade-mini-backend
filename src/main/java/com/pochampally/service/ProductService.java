@@ -30,11 +30,12 @@ public class ProductService {
 
     public List<Product> findRelated(String productId, int limit) {
         Product product = getById(productId);
-        List<Product> candidates = productRepository.findByIsActiveTrue().stream()
-                .filter(p -> !p.getId().equals(productId))
-                .filter(p -> (product.getFabric() != null && product.getFabric().equals(p.getFabric())) ||
-                             (product.getWeaveType() != null && product.getWeaveType().equals(p.getWeaveType())))
-                .collect(java.util.stream.Collectors.toList());
+        var pageable = org.springframework.data.domain.PageRequest.of(0, limit * 3);
+        List<Product> candidates = productRepository.findRelated(
+                productId,
+                product.getFabric() != null ? product.getFabric() : Product.Fabric.SILK,
+                product.getWeaveType() != null ? product.getWeaveType() : Product.WeaveType.HANDLOOM,
+                pageable);
         java.util.Collections.shuffle(candidates);
         return candidates.stream().limit(limit).toList();
     }

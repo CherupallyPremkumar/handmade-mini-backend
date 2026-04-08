@@ -125,6 +125,26 @@ public class EmailService {
         }
     }
 
+    // ═══ Password Reset ═══
+
+    public void sendPasswordResetEmail(String toEmail, String userName, String token) {
+        if (!isConfigured() || toEmail == null) return;
+        try {
+            String name = userName != null ? escapeHtml(userName) : "there";
+            String resetUrl = frontendUrl + "/reset-password?token=" + token;
+            String html = emailWrapper("Reset Your Password",
+                "<p style=\"color:#333;font-size:14px;\">Hi " + name + ",</p>" +
+                "<p style=\"color:#666;font-size:14px;\">We received a request to reset your password.</p>" +
+                "<div style=\"text-align:center;margin:24px 0;\">" +
+                "<a href=\"" + resetUrl + "\" style=\"background:#5c4033;color:white;padding:14px 32px;text-decoration:none;border-radius:6px;font-size:16px;\">Reset Password</a></div>" +
+                "<p style=\"color:#999;font-size:12px;\">This link expires in 1 hour. If you didn't request this, ignore this email.</p>");
+            sendEmail(toEmail, "Reset Your Password - Dhanunjaiah Handlooms", html);
+            log.info("Password reset email sent to {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send password reset email to {}: {}", toEmail, e.getMessage());
+        }
+    }
+
     // ═══ Verification Email ═══
 
     public void sendVerificationEmail(String toEmail, String userName, String token) {

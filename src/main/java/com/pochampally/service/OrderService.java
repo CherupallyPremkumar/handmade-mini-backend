@@ -315,8 +315,17 @@ public class OrderService {
         return orderRepository.findAll();
     }
 
+    public org.springframework.data.domain.Page<Order> listAll(org.springframework.data.domain.Pageable pageable) {
+        return orderRepository.findAll(pageable);
+    }
+
     public List<Order> listByStatus(Order.OrderStatus status) {
         return orderRepository.findByStatus(status);
+
+    }
+
+    public org.springframework.data.domain.Page<Order> listByStatus(Order.OrderStatus status, org.springframework.data.domain.Pageable pageable) {
+        return orderRepository.findByStatus(status, pageable);
     }
 
     public List<Order> listByCustomerEmail(String email) {

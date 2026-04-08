@@ -53,20 +53,13 @@ public class ReviewService {
             throw new IllegalStateException("You have already reviewed this product");
         }
 
-        // Only purchasers can review
+        // Only purchasers can review — single optimized query
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        boolean purchased = false;
-        if (user.getEmail() != null) {
-            List<Order> orders = orderRepository.findByCustomerEmail(user.getEmail());
-            Set<Order.OrderStatus> validStatuses = Set.of(
-                    Order.OrderStatus.PAID, Order.OrderStatus.SHIPPED, Order.OrderStatus.DELIVERED);
-            purchased = orders.stream()
-                    .filter(o -> validStatuses.contains(o.getStatus()))
-                    .flatMap(o -> o.getItems().stream())
-                    .anyMatch(item -> productId.equals(item.getProductId()));
-        }
+        boolean purchased = user.getEmail() != null && orderRepository.existsPurchase(
+                user.getEmail(), productId,
+                Set.of(Order.OrderStatus.PAID, Order.OrderStatus.SHIPPED, Order.OrderStatus.DELIVERED));
 
         if (!purchased) {
             throw new IllegalStateException("You can only review products you have purchased");

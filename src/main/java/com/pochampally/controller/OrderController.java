@@ -49,12 +49,15 @@ public class OrderController {
     // --- Admin endpoints ---
 
     @GetMapping("/api/admin/orders")
-    public ResponseEntity<List<Order>> listOrders(
-            @RequestParam(required = false) Order.OrderStatus status) {
+    public ResponseEntity<?> listOrders(
+            @RequestParam(required = false) Order.OrderStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        var pageable = org.springframework.data.domain.PageRequest.of(page, Math.min(size, 100));
         if (status != null) {
-            return ResponseEntity.ok(orderService.listByStatus(status));
+            return ResponseEntity.ok(orderService.listByStatus(status, pageable));
         }
-        return ResponseEntity.ok(orderService.listAll());
+        return ResponseEntity.ok(orderService.listAll(pageable));
     }
 
     @PatchMapping("/api/admin/orders/{id}/status")

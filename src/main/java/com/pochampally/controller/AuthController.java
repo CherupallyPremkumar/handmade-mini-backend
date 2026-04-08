@@ -96,6 +96,32 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Verification email sent"));
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> body,
+                                                               HttpServletRequest httpRequest) {
+        String clientIp = resolveClientIp(httpRequest);
+        if (!loginRateLimiter.tryAcquire(clientIp)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("error", "Too many requests"));
+        }
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
+        }
+        authService.requestPasswordReset(email);
+        return ResponseEntity.ok(Map.of("message", "Password reset email sent"));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> body) {
+        String token = body.get("token");
+        String password = body.get("password");
+        if (token == null || password == null || password.length() < 6) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Token and password (min 6 chars) required"));
+        }
+        authService.resetPassword(token, password);
+        return ResponseEntity.ok(Map.of("message", "Password reset successful"));
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(HttpServletResponse response) {
         Cookie cookie = new Cookie(AUTH_COOKIE, "");
@@ -135,10 +161,15 @@ public class AuthController {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+        // Only trust X-Forwarded-For from local/nginx (127.0.0.1, ::1, 10.x, 172.x, 192.168.x)
+        String remoteAddr = request.getRemoteAddr();
+        if (remoteAddr != null && (remoteAddr.startsWith("127.") || remoteAddr.equals("::1") ||
+                remoteAddr.startsWith("10.") || remoteAddr.startsWith("172.") || remoteAddr.startsWith("192.168."))) {
+            String forwarded = request.getHeader("X-Forwarded-For");
+            if (forwarded != null && !forwarded.isBlank()) {
+                return forwarded.split(",")[0].trim();
+            }
         }
-        return request.getRemoteAddr();
+        return remoteAddr;
     }
 }

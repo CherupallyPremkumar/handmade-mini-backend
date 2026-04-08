@@ -20,7 +20,12 @@ public class InvoiceService {
     private static final Color GOLD = new Color(212, 160, 23);
     private static final Color GREY = new Color(100, 100, 100);
 
+    private static final int MAX_INVOICE_ITEMS = 100;
+
     public byte[] generateInvoicePdf(Order order) {
+        if (order.getItems() != null && order.getItems().size() > MAX_INVOICE_ITEMS) {
+            throw new IllegalStateException("Invoice generation limited to " + MAX_INVOICE_ITEMS + " items");
+        }
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             Document doc = new Document(PageSize.A4, 40, 40, 40, 40);
