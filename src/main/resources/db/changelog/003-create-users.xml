@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="003-create-users" author="homebase_db">
+    <changeSet id="003-create-users" author="homebase_db" context="dev">
         <createTable tableName="users" schemaName="homebase_db">
             <column name="id" type="VARCHAR(255)">
                 <constraints primaryKey="true"/>
@@ -25,7 +25,7 @@
             <column name="created_time" type="TIMESTAMP" defaultValueComputed="NOW()"/>
         </createTable>
 
-        <!-- Seed admin user: email=admin@dhanunjaiah.com, password=admin123 (BCrypt hashed) -->
+        <!-- Dev-only seed admin (production admin created separately) -->
         <insert tableName="users" schemaName="homebase_db">
             <column name="id" value="admin-001"/>
             <column name="name" value="Dhanunjaiah Admin"/>

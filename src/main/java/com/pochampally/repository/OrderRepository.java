@@ -16,6 +16,8 @@ public interface OrderRepository extends JpaRepository<Order, String> {
 
     List<Order> findByStatus(Order.OrderStatus status);
 
+    org.springframework.data.domain.Page<Order> findByStatus(Order.OrderStatus status, org.springframework.data.domain.Pageable pageable);
+
     Optional<Order> findByOrderNumber(String orderNumber);
 
     Optional<Order> findByRazorpayOrderId(String razorpayOrderId);
@@ -28,6 +30,13 @@ public interface OrderRepository extends JpaRepository<Order, String> {
     List<Order> findByStatusAndCreatedTimeBefore(Order.OrderStatus status, java.time.Instant cutoff);
 
     long countByCustomerEmailAndStatus(String email, Order.OrderStatus status);
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o WHERE o.status IN :statuses AND o.createdTime >= :since")
+    long sumRevenueByStatusesAndCreatedTimeAfter(@Param("statuses") java.util.Collection<Order.OrderStatus> statuses, @Param("since") java.time.Instant since);
+
+    long countByCreatedTimeAfter(java.time.Instant since);
+
+    List<Order> findTop10ByOrderByCreatedTimeDesc();
 
     long countByCustomerPhoneAndStatus(String phone, Order.OrderStatus status);
 
