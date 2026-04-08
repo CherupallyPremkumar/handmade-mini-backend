@@ -127,6 +127,36 @@ public class AuthService {
         log.info("Verification email resent to: {}", user.getEmail());
     }
 
+    @Transactional
+    public void requestPasswordReset(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("No account found with this email"));
+
+        String resetToken = generateVerificationToken();
+        user.setVerificationToken(resetToken);
+        user.setVerificationTokenExpiry(Instant.now().plus(1, ChronoUnit.HOURS));
+        userRepository.save(user);
+
+        emailService.sendPasswordResetEmail(user.getEmail(), user.getName(), resetToken);
+        log.info("Password reset requested for: {}", user.getEmail());
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        User user = userRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token"));
+
+        if (user.getVerificationTokenExpiry() != null && user.getVerificationTokenExpiry().isBefore(Instant.now())) {
+            throw new IllegalStateException("Reset link has expired. Please request a new one.");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setVerificationToken(null);
+        user.setVerificationTokenExpiry(null);
+        userRepository.save(user);
+        log.info("Password reset successful for: {}", user.getEmail());
+    }
+
     public User getUserById(String userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));

@@ -38,6 +38,11 @@ public interface OrderRepository extends JpaRepository<Order, String> {
 
     List<Order> findTop10ByOrderByCreatedTimeDesc();
 
+    @Query("SELECT CASE WHEN COUNT(oi) > 0 THEN true ELSE false END FROM Order o JOIN o.items oi " +
+           "WHERE o.customerEmail = :email AND oi.productId = :productId AND o.status IN :statuses")
+    boolean existsPurchase(@Param("email") String email, @Param("productId") String productId,
+                           @Param("statuses") java.util.Collection<Order.OrderStatus> statuses);
+
     long countByCustomerPhoneAndStatus(String phone, Order.OrderStatus status);
 
     @Query("SELECT o FROM Order o WHERE o.customerPhone = :phone AND o.status = 'PENDING_PAYMENT' " +

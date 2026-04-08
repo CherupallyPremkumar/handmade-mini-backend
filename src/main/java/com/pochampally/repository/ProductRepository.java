@@ -41,4 +41,7 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     List<Product> findAllNotDeleted();
 
     Optional<Product> findBySku(String sku);
+
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isDeleted = false AND p.id <> :excludeId AND (p.fabric = :fabric OR p.weaveType = :weaveType)")
+    List<Product> findRelated(@Param("excludeId") String excludeId, @Param("fabric") Product.Fabric fabric, @Param("weaveType") Product.WeaveType weaveType, org.springframework.data.domain.Pageable pageable);
 }
