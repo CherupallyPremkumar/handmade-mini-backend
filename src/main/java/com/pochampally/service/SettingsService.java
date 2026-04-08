@@ -3,7 +3,9 @@ package com.pochampally.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pochampally.entity.AppSetting;
+import com.pochampally.entity.Category;
 import com.pochampally.repository.AppSettingRepository;
+import com.pochampally.repository.CategoryRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SettingsService {
 
     private final AppSettingRepository settingRepository;
+    private final CategoryRepository categoryRepository;
     private final ObjectMapper objectMapper;
 
     private static final long CACHE_TTL_SECONDS = 60;
@@ -60,6 +63,30 @@ public class SettingsService {
             }
         } catch (Exception e) {
             log.warn("Could not seed app settings from JSON: {}", e.getMessage());
+        }
+
+        // Seed categories from JSON (only if categories table is empty)
+        try {
+            if (categoryRepository.count() == 0) {
+                InputStream catIs = new ClassPathResource("db/seed/categories.json").getInputStream();
+                List<Map<String, String>> cats = objectMapper.readValue(catIs, new TypeReference<>() {});
+                int pos = 0;
+                for (Map<String, String> cat : cats) {
+                    categoryRepository.save(Category.builder()
+                            .name(cat.get("name"))
+                            .slug(cat.get("slug"))
+                            .description(cat.get("description"))
+                            .filterKey(cat.getOrDefault("filterKey", ""))
+                            .filterValue(cat.getOrDefault("filterValue", ""))
+                            .position(pos++)
+                            .showOnHome(false)
+                            .isActive(true)
+                            .build());
+                }
+                log.info("Seeded {} categories from JSON", cats.size());
+            }
+        } catch (Exception e) {
+            log.warn("Could not seed categories from JSON: {}", e.getMessage());
         }
     }
 
