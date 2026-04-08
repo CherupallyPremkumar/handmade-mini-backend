@@ -1,6 +1,6 @@
 package com.pochampally.controller;
 
-import com.pochampally.config.LoginRateLimiter;
+import com.pochampally.config.RateLimiter;
 import com.pochampally.dto.AuthResponse;
 import com.pochampally.dto.LoginRequest;
 import com.pochampally.dto.RegisterRequest;
@@ -24,7 +24,7 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final LoginRateLimiter loginRateLimiter;
+    private final RateLimiter loginRateLimiter;
 
     private static final String AUTH_COOKIE = "dhn_token";
     private static final int COOKIE_MAX_AGE = 24 * 60 * 60; // 24 hours
@@ -35,12 +35,12 @@ public class AuthController {
         AuthResponse authResponse = authService.register(request);
         setAuthCookie(response, authResponse.getToken());
 
-        // Return user info + token (for API clients) AND set httpOnly cookie (for browser)
         return ResponseEntity.ok(Map.of(
                 "token", authResponse.getToken(),
                 "name", authResponse.getName(),
                 "email", authResponse.getEmail(),
-                "role", authResponse.getRole()
+                "role", authResponse.getRole(),
+                "emailVerified", authResponse.getEmailVerified()
         ));
     }
 
@@ -66,8 +66,34 @@ public class AuthController {
                 "token", authResponse.getToken(),
                 "name", authResponse.getName(),
                 "email", authResponse.getEmail(),
-                "role", authResponse.getRole()
+                "role", authResponse.getRole(),
+                "emailVerified", authResponse.getEmailVerified()
         ));
+    }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<Map<String, Object>> verifyEmail(@RequestParam("token") String token) {
+        String message = authService.verifyEmail(token);
+        return ResponseEntity.ok(Map.of("message", message, "verified", true));
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Map<String, ?>> resendVerification(@RequestBody Map<String, String> body,
+                                                              HttpServletRequest httpRequest) {
+        String clientIp = resolveClientIp(httpRequest);
+        if (!loginRateLimiter.tryAcquire(clientIp)) {
+            long retryAfter = loginRateLimiter.retryAfterSeconds(clientIp);
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
+                    "error", "Too many requests. Try again in " + retryAfter + " seconds.",
+                    "retryAfterSeconds", retryAfter));
+        }
+
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
+        }
+        authService.resendVerification(email);
+        return ResponseEntity.ok(Map.of("message", "Verification email sent"));
     }
 
     @PostMapping("/logout")
@@ -93,7 +119,8 @@ public class AuthController {
                 "name", user.getName() != null ? user.getName() : "",
                 "email", user.getEmail(),
                 "phone", user.getPhone() != null ? user.getPhone() : "",
-                "role", user.getRole().name()
+                "role", user.getRole().name(),
+                "emailVerified", user.getEmailVerified()
         ));
     }
 

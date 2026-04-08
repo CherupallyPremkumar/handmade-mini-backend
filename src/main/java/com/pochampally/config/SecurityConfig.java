@@ -40,7 +40,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public: auth endpoints
-                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/logout").permitAll()
+                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/logout",
+                                "/api/auth/verify-email", "/api/auth/resend-verification").permitAll()
 
                         // Public: browse products
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
@@ -58,11 +59,15 @@ public class SecurityConfig {
                         // Public: payment webhooks
                         .requestMatchers("/api/webhooks/**").permitAll()
 
+                        // Public: CMS (banners, categories)
+                        .requestMatchers(HttpMethod.GET, "/api/cms/**").permitAll()
+
                         // Public: health check
                         .requestMatchers("/actuator/health").permitAll()
 
-                        // Checkout: payment callback is public (Razorpay redirect)
+                        // Checkout: payment callback is public (Razorpay redirect — POST for success, GET for failure)
                         .requestMatchers(HttpMethod.POST, "/api/checkout/payment-callback").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/checkout/payment-callback").permitAll()
 
                         // Checkout: requires login
                         .requestMatchers("/api/checkout/**").authenticated()

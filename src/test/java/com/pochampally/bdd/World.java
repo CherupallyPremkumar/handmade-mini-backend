@@ -2,7 +2,7 @@ package com.pochampally.bdd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pochampally.config.LoginRateLimiter;
+import com.pochampally.config.RateLimiter;
 import com.pochampally.entity.Product;
 import com.pochampally.entity.User;
 import com.pochampally.repository.*;
@@ -30,7 +30,12 @@ public class World {
     @Autowired OrderRepository orders;
     @Autowired OrderItemRepository orderItems;
     @Autowired CartItemRepository cartItems;
-    @Autowired LoginRateLimiter rateLimiter;
+    @Autowired com.pochampally.repository.AddressRepository addresses;
+    @Autowired com.pochampally.repository.BannerRepository banners;
+    @Autowired com.pochampally.repository.CategoryRepository categories;
+    @Autowired com.pochampally.repository.AppSettingRepository appSettings;
+    @Autowired RateLimiter rateLimiter;
+    @Autowired com.pochampally.controller.CheckoutController checkoutController;
 
     // ── Per-scenario state ──
     MvcResult lastResult;
@@ -44,11 +49,17 @@ public class World {
     @Before(order = 0)
     public void cleanDb() {
         rateLimiter.reset();
+        checkoutController.getPaymentVerifyRateLimiter().reset();
+        banners.deleteAll();
+        categories.deleteAll();
+        addresses.deleteAll();
         orderItems.deleteAll();
         orders.deleteAll();
         cartItems.deleteAll();
         products.deleteAll();
         users.deleteAll();
+
+        // Settings are seeded by SettingsService.seedFromJson() @PostConstruct from db/seed/app-settings.json
     }
 
     @Before(order = 1)
@@ -143,12 +154,18 @@ public class World {
 
     // ── Auth helpers ──
 
-    /** Register + login, store token from cookie. Works even if email already registered. */
+    /** Register + login, store token from cookie. Auto-verifies email for tests. */
     void loginAs(String email, String password) throws Exception {
         post("/api/auth/register",
                 """
                 {"name":"Test User","email":"%s","password":"%s"}
                 """.formatted(email, password));
+
+        // Auto-verify email in tests
+        users.findByEmail(email).ifPresent(u -> {
+            u.setEmailVerified(true);
+            users.save(u);
+        });
 
         MvcResult r = post("/api/auth/login",
                 """
@@ -160,7 +177,7 @@ public class World {
         token = cookie != null ? cookie.getValue() : jsonKeyFrom(r, "token");
     }
 
-    /** Register + login as admin (promotes role in DB). */
+    /** Register + login as admin (promotes role in DB, auto-verifies email). */
     void loginAsAdmin() throws Exception {
         String email = "admin-" + UUID.randomUUID().toString().substring(0, 8) + "@test.com";
         post("/api/auth/register",
@@ -170,6 +187,7 @@ public class World {
 
         users.findByEmail(email).ifPresent(u -> {
             u.setRole(User.Role.ADMIN);
+            u.setEmailVerified(true);
             users.save(u);
         });
 
@@ -188,14 +206,17 @@ public class World {
         for (Map<String, String> row : rows) {
             Product p = Product.builder()
                     .name(row.get("name"))
+                    .description(row.getOrDefault("description", "A beautiful handwoven Pochampally Ikat saree with traditional patterns"))
+                    .secondaryDescription(row.getOrDefault("secondaryDescription", "Perfect for weddings, festivals, and special occasions. Dry clean recommended."))
                     .fabric(Product.Fabric.valueOf(row.get("fabric")))
                     .weaveType(Product.WeaveType.valueOf(row.get("weaveType")))
-                    .color(row.get("color"))
+                    .bodyColor(row.get("color"))
                     .sellingPrice(Long.parseLong(row.get("sellingPrice")))
                     .mrp(Long.parseLong(row.get("mrp")))
                     .stock(Integer.parseInt(row.get("stock")))
                     .gstPct(Integer.parseInt(row.getOrDefault("gstPct", "5")))
                     .hsnCode("50079090")
+                    .sku("DHN-TEST-" + String.format("%04d", productIds.size() + 1))
                     .isActive(!"Inactive Product".equals(row.get("name")))
                     .build();
             p = products.save(p);

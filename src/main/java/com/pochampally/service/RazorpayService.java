@@ -140,6 +140,53 @@ public class RazorpayService {
         }
     }
 
+    /**
+     * Initiates a full refund for a captured payment via Razorpay API.
+     *
+     * @param razorpayPaymentId the Razorpay payment ID (pay_xxx)
+     * @param amountInPaisa     amount to refund in paisa
+     * @param reason            reason for the refund
+     * @return Razorpay refund ID
+     */
+    public String refundPayment(String razorpayPaymentId, long amountInPaisa, String reason) {
+        try {
+            Map<String, Object> requestBody = Map.of(
+                    "amount", amountInPaisa,
+                    "speed", "normal",
+                    "notes", Map.of("reason", reason)
+            );
+
+            String jsonBody = objectMapper.writeValueAsString(requestBody);
+            String auth = Base64.getEncoder().encodeToString(
+                    (keyId + ":" + keySecret).getBytes(StandardCharsets.UTF_8));
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(RAZORPAY_API_BASE + "/payments/" + razorpayPaymentId + "/refund"))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Basic " + auth)
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                log.error("Razorpay refund failed. Payment: {}, Status: {}, Body: {}",
+                        razorpayPaymentId, response.statusCode(), response.body());
+                throw new RuntimeException("Refund failed. Status: " + response.statusCode());
+            }
+
+            JsonNode responseJson = objectMapper.readTree(response.body());
+            String refundId = responseJson.get("id").asText();
+            log.info("Razorpay refund created: {} for payment: {}", refundId, razorpayPaymentId);
+            return refundId;
+
+        } catch (IOException | InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Error creating refund for payment: {}", razorpayPaymentId, e);
+            throw new RuntimeException("Failed to create refund", e);
+        }
+    }
+
     public String getKeyId() {
         return keyId;
     }

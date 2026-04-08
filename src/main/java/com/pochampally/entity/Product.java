@@ -33,6 +33,9 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "secondary_description", columnDefinition = "TEXT")
+    private String secondaryDescription;
+
     // Clothing category
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
@@ -47,9 +50,6 @@ public class Product {
     @Enumerated(EnumType.STRING)
     @Column(name = "weave_type", length = 30)
     private WeaveType weaveType;
-
-    @Column(length = 50)
-    private String color;
 
     @Column(length = 50)
     private String size;
@@ -95,9 +95,57 @@ public class Product {
     @Builder.Default
     private Integer gstPct = 5;
 
+    // Physical attributes
+    @Column(name = "weight_grams")
+    private Integer weightGrams;
+
+    @Column(name = "width_inches")
+    private Double widthInches;
+
+    @Column(name = "blouse_length_meters")
+    private Double blouseLengthMeters;
+
+    // Classification
+    @Column(length = 200)
+    private String occasion;
+
+    @Column(name = "work_type", length = 200)
+    private String workType;
+
+    @Column(length = 200)
+    private String pattern;
+
+    // Color breakdown
+    @Column(name = "body_color", length = 100)
+    private String bodyColor;
+
+    @Column(name = "border_color", length = 100)
+    private String borderColor;
+
+    @Column(name = "pallu_color", length = 100)
+    private String palluColor;
+
+    // Details
+    @Column(name = "care_instructions", length = 500)
+    private String careInstructions;
+
+    @Column(length = 200)
+    private String certification;
+
+    @Column(length = 50, unique = true, nullable = false)
+    private String sku;
+
+    // SEO tags (comma-separated)
+    @Column(length = 500)
+    private String tags;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
 
     @Column(name = "created_time", nullable = false, updatable = false)
     private Instant createdTime;

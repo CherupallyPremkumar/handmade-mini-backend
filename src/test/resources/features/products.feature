@@ -54,7 +54,7 @@ Feature: Product Catalog
     Given I am logged in as admin
     When I POST "/api/admin/products" with auth and body:
       """
-      {"name":"New Saree","fabric":"SILK","weaveType":"IKAT","color":"Purple","sellingPrice":500000,"mrp":700000,"stock":8,"gstPct":5,"hsnCode":"50079090"}
+      {"name":"New Saree","description":"A beautiful handwoven Pochampally Ikat saree with intricate patterns","secondaryDescription":"Perfect for weddings, festivals, and special occasions. Dry clean only.","fabric":"SILK","weaveType":"IKAT","bodyColor":"Purple","sellingPrice":500000,"mrp":700000,"stock":8,"gstPct":5,"hsnCode":"50079090"}
       """
     Then the response status is 201
     And the response JSON key "name" is "New Saree"
@@ -124,7 +124,7 @@ Feature: Product Catalog
     Given I am logged in as admin
     When I POST "/api/admin/products" with auth and body:
       """
-      {"name":"Zero Stock","fabric":"SILK","weaveType":"IKAT","color":"Red","sellingPrice":100000,"mrp":200000,"stock":0,"gstPct":5,"hsnCode":"50079090"}
+      {"name":"Zero Stock","description":"A stunning handwoven saree from the master weavers of Pochampally","secondaryDescription":"Ideal for everyday wear and casual occasions. Machine washable cotton.","fabric":"SILK","weaveType":"IKAT","bodyColor":"Red","sellingPrice":100000,"mrp":200000,"stock":0,"gstPct":5,"hsnCode":"50079090"}
       """
     Then the response status is 201
 
@@ -132,7 +132,7 @@ Feature: Product Catalog
     Given I am logged in as admin
     When I POST "/api/admin/products" with auth and body:
       """
-      {"name":"   ","fabric":"SILK","weaveType":"IKAT","color":"Red","sellingPrice":100000,"mrp":200000,"stock":5,"gstPct":5,"hsnCode":"50079090"}
+      {"name":"   ","fabric":"SILK","weaveType":"IKAT","bodyColor":"Red","sellingPrice":100000,"mrp":200000,"stock":5,"gstPct":5,"hsnCode":"50079090"}
       """
     Then the response status is 400
 

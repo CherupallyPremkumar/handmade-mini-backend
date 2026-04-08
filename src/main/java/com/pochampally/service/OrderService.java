@@ -23,17 +23,10 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final CartService cartService;
     private final ProductService productService;
+    private final RazorpayService razorpayService;
+    private final SettingsService settingsService;
 
-    private static final long FREE_SHIPPING_THRESHOLD = 99900L;
-    private static final long SHIPPING_COST = 9900L;
-    private static final int PAYMENT_TIMEOUT_MINUTES = 30;
-
-    /**
-     * Step 1: Create order with PENDING_PAYMENT status.
-     * Stock is NOT decremented — only validated.
-     * Stock gets decremented only when payment is confirmed.
-     */
-    private static final int MAX_PENDING_ORDERS = 3;
+    // Fallback only — real value from settingsService.getInt("payment_timeout_minutes")
 
     @Transactional
     public Order createOrderFromItems(List<Map<String, Object>> items, String customerName,
@@ -42,10 +35,15 @@ public class OrderService {
             throw new IllegalStateException("No items provided");
         }
 
-        // Prevent spam: max 3 pending orders per customer
+        // Prevent spam: max pending orders per customer (by email or phone)
+        int maxPending = settingsService.getInt("max_pending_orders");
+        long pendingByPhone = orderRepository.countByCustomerPhoneAndStatus(customerPhone, Order.OrderStatus.PENDING_PAYMENT);
+        if (pendingByPhone >= maxPending) {
+            throw new IllegalStateException("Too many pending orders. Complete or wait for existing orders to expire.");
+        }
         if (customerEmail != null) {
-            long pending = orderRepository.countByCustomerEmailAndStatus(customerEmail, Order.OrderStatus.PENDING_PAYMENT);
-            if (pending >= MAX_PENDING_ORDERS) {
+            long pendingByEmail = orderRepository.countByCustomerEmailAndStatus(customerEmail, Order.OrderStatus.PENDING_PAYMENT);
+            if (pendingByEmail >= maxPending) {
                 throw new IllegalStateException("Too many pending orders. Complete or wait for existing orders to expire.");
             }
         }
@@ -96,7 +94,7 @@ public class OrderService {
             order.getItems().add(orderItem);
         }
 
-        long shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+        long shippingCost = subtotal >= settingsService.getLong("free_shipping_threshold") ? 0 : settingsService.getLong("shipping_cost");
         long totalAmount = subtotal + gstAmount + shippingCost;
 
         order.setSubtotal(subtotal);
@@ -150,7 +148,7 @@ public class OrderService {
             order.addItem(orderItem);
         }
 
-        long shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+        long shippingCost = subtotal >= settingsService.getLong("free_shipping_threshold") ? 0 : settingsService.getLong("shipping_cost");
         long totalAmount = subtotal + gstAmount + shippingCost;
 
         order.setSubtotal(subtotal);
@@ -185,18 +183,41 @@ public class OrderService {
                     " as paid — current status: " + order.getStatus());
         }
 
-        // Decrement stock for each item — if any fails, mark for manual refund
+        // Decrement stock for each item — if any fails, restore already-decremented and refund
+        List<OrderItem> decremented = new java.util.ArrayList<>();
         try {
             for (OrderItem item : order.getItems()) {
                 productService.decrementStock(item.getProductId(), item.getQuantity());
+                decremented.add(item);
             }
         } catch (IllegalStateException e) {
-            // Stock exhausted after payment captured — needs manual refund
-            log.error("STOCK EXHAUSTED after payment! Order: {}, Razorpay: {}. MANUAL REFUND NEEDED.",
+            log.error("STOCK EXHAUSTED after payment! Order: {}, Razorpay: {}. Restoring stock and initiating auto-refund.",
                     order.getOrderNumber(), razorpayPaymentId);
+
+            // Restore stock for items that were already decremented
+            for (OrderItem restored : decremented) {
+                try {
+                    productService.incrementStock(restored.getProductId(), restored.getQuantity());
+                } catch (Exception restoreEx) {
+                    log.error("Failed to restore stock for product {} in order {}",
+                            restored.getProductId(), order.getOrderNumber(), restoreEx);
+                }
+            }
+
             order.setRazorpayPaymentId(razorpayPaymentId);
-            order.setPaymentStatus("captured_stock_exhausted");
             order.setStatus(Order.OrderStatus.CANCELLED);
+
+            // Auto-refund via Razorpay
+            try {
+                String refundId = razorpayService.refundPayment(razorpayPaymentId, order.getTotalAmount(),
+                        "Stock exhausted after payment for order " + order.getOrderNumber());
+                order.setPaymentStatus("refunded");
+                log.info("Auto-refund successful for order {}. Refund ID: {}", order.getOrderNumber(), refundId);
+            } catch (Exception refundEx) {
+                order.setPaymentStatus("captured_stock_exhausted_refund_failed");
+                log.error("AUTO-REFUND FAILED for order {}. MANUAL REFUND NEEDED. Payment: {}",
+                        order.getOrderNumber(), razorpayPaymentId, refundEx);
+            }
             return orderRepository.save(order);
         }
 
@@ -213,6 +234,15 @@ public class OrderService {
     @Transactional
     public Order markPaymentFailed(String razorpayOrderId) {
         Order order = getByRazorpayOrderId(razorpayOrderId);
+
+        // Don't overwrite if already PAID, SHIPPED, DELIVERED, or CANCELLED
+        if (order.getStatus() != Order.OrderStatus.PENDING_PAYMENT &&
+            order.getStatus() != Order.OrderStatus.PLACED) {
+            log.info("Order {} already in status {}, skipping markPaymentFailed",
+                    order.getOrderNumber(), order.getStatus());
+            return order;
+        }
+
         order.setPaymentStatus("failed");
         order.setStatus(Order.OrderStatus.CANCELLED);
         log.info("Order {} payment failed, cancelled.", order.getOrderNumber());
@@ -226,7 +256,9 @@ public class OrderService {
     @Scheduled(fixedRate = 5 * 60 * 1000) // every 5 minutes
     @Transactional
     public void cancelExpiredOrders() {
-        Instant cutoff = Instant.now().minus(PAYMENT_TIMEOUT_MINUTES, ChronoUnit.MINUTES);
+        int timeoutMinutes = settingsService.getInt("payment_timeout_minutes");
+        if (timeoutMinutes <= 0) timeoutMinutes = 30;
+        Instant cutoff = Instant.now().minus(timeoutMinutes, ChronoUnit.MINUTES);
         List<Order> expired = orderRepository.findByStatusAndCreatedTimeBefore(
                 Order.OrderStatus.PENDING_PAYMENT, cutoff);
 
@@ -235,12 +267,22 @@ public class OrderService {
             order.setPaymentStatus("expired");
             orderRepository.save(order);
             log.info("Expired order {} cancelled (no payment after {} min)",
-                    order.getOrderNumber(), PAYMENT_TIMEOUT_MINUTES);
+                    order.getOrderNumber(), timeoutMinutes);
         }
 
         if (!expired.isEmpty()) {
             log.info("Cancelled {} expired orders", expired.size());
         }
+    }
+
+    /**
+     * Check for a recent duplicate pending order (same phone, within 60 seconds, with Razorpay ID).
+     * Prevents double-click / network retry from creating duplicate orders.
+     */
+    public Order findRecentDuplicate(String customerPhone) {
+        Instant since = Instant.now().minus(60, ChronoUnit.SECONDS);
+        List<Order> recent = orderRepository.findRecentPendingByPhone(customerPhone, since);
+        return recent.isEmpty() ? null : recent.getFirst();
     }
 
     public Order getByOrderNumber(String orderNumber) {

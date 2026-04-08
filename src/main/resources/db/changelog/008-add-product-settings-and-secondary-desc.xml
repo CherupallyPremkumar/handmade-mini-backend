@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="008-add-secondary-description" author="homebase_db">
+        <addColumn tableName="products" schemaName="homebase_db">
+            <column name="secondary_description" type="TEXT"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="008-add-product-validation-settings" author="homebase_db">
+        <insert tableName="app_settings" schemaName="homebase_db">
+            <column name="setting_key" value="min_product_images"/>
+            <column name="setting_value" value="3"/>
+            <column name="description" value="Minimum images required per product"/>
+        </insert>
+        <insert tableName="app_settings" schemaName="homebase_db">
+            <column name="setting_key" value="min_product_videos"/>
+            <column name="setting_value" value="1"/>
+            <column name="description" value="Minimum videos required per product"/>
+        </insert>
+        <insert tableName="app_settings" schemaName="homebase_db">
+            <column name="setting_key" value="require_product_description"/>
+            <column name="setting_value" value="true"/>
+            <column name="description" value="Product description is mandatory"/>
+        </insert>
+        <insert tableName="app_settings" schemaName="homebase_db">
+            <column name="setting_key" value="require_secondary_description"/>
+            <column name="setting_value" value="true"/>
+            <column name="description" value="Secondary description is mandatory (helps customers decide)"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

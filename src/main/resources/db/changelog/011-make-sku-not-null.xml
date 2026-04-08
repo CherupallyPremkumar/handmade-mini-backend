@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="011-backfill-sku" author="homebase_db">
+        <!-- Generate SKU for existing products that don't have one -->
+        <sql>
+            UPDATE homebase_db.products p
+            SET sku = 'DHN-' || UPPER(COALESCE(SUBSTRING(p.fabric, 1, 3), 'GEN')) || '-' || LPAD(CAST(sub.rn AS TEXT), 4, '0')
+            FROM (SELECT id, ROW_NUMBER() OVER (ORDER BY created_time) AS rn FROM homebase_db.products WHERE sku IS NULL) sub
+            WHERE p.id = sub.id AND p.sku IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="011-make-sku-not-null" author="homebase_db">
+        <addNotNullConstraint tableName="products" schemaName="homebase_db"
+                              columnName="sku" columnDataType="VARCHAR(50)"/>
+    </changeSet>
+
+</databaseChangeLog>

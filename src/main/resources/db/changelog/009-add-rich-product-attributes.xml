@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="009-add-rich-product-attributes" author="homebase_db">
+        <addColumn tableName="products" schemaName="homebase_db">
+            <!-- Physical -->
+            <column name="weight_grams" type="INT"/>
+            <column name="width_inches" type="DOUBLE"/>
+            <column name="blouse_length_meters" type="DOUBLE"/>
+
+            <!-- Classification -->
+            <column name="occasion" type="VARCHAR(200)"/>
+            <column name="work_type" type="VARCHAR(200)"/>
+            <column name="pattern" type="VARCHAR(200)"/>
+
+            <!-- Colors breakdown -->
+            <column name="body_color" type="VARCHAR(100)"/>
+            <column name="border_color" type="VARCHAR(100)"/>
+            <column name="pallu_color" type="VARCHAR(100)"/>
+
+            <!-- Details -->
+            <column name="care_instructions" type="VARCHAR(500)"/>
+            <column name="certification" type="VARCHAR(200)"/>
+            <column name="sku" type="VARCHAR(50)"/>
+
+            <!-- SEO / search -->
+            <column name="tags" type="VARCHAR(500)"/>
+        </addColumn>
+
+        <createIndex tableName="products" schemaName="homebase_db" indexName="idx_products_sku" unique="true">
+            <column name="sku"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -11,6 +11,7 @@ public class CreateOrderRequest {
     private String customerPhone;
     private String customerEmail;
     private Map<String, String> shippingAddress;
+    private String addressId;
     private List<OrderItemRequest> items;
     private String sessionId;
 

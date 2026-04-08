@@ -23,6 +23,7 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
     default-schema: homebase_db
+    contexts: ${LIQUIBASE_CONTEXTS:dev}
 
   servlet:
     multipart:
@@ -40,6 +41,14 @@ cloudflare:
     secret-key: ${CF_R2_SECRET_KEY:not-configured}
     bucket: ${CF_R2_BUCKET:homebase_db-images}
     public-domain: ${CF_R2_PUBLIC_DOMAIN:localhost}
+
+# AWS SES Email
+aws:
+  ses:
+    access-key: ${SES_ACCESS_KEY:}
+    secret-key: ${SES_SECRET_KEY:}
+    region: ${SES_REGION:ap-south-1}
+    from-email: ${SES_FROM_EMAIL:}
 
 # Razorpay configuration
 razorpay:
