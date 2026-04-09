@@ -32,6 +32,14 @@ public class CartItem {
     @Column(name = "user_id")
     private String userId;
 
+    /** Selling price snapshot at time item was added (paisa). Null for legacy items. */
+    @Column(name = "snapshot_price")
+    private Long snapshotPrice;
+
+    /** MRP snapshot at time item was added (paisa). Null for legacy items. */
+    @Column(name = "snapshot_mrp")
+    private Long snapshotMrp;
+
     @Column(name = "added_at", nullable = false, updatable = false)
     private Instant addedAt;
 

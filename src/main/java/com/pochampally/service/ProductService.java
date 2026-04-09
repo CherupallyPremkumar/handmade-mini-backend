@@ -1,8 +1,11 @@
 package com.pochampally.service;
 
+import com.pochampally.config.CacheConfig;
 import com.pochampally.entity.Product;
 import com.pochampally.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +18,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
+    @Cacheable(value = CacheConfig.PRODUCT_LISTS_CACHE, key = "'active'")
     public List<Product> listActive() {
         return productRepository.findByIsActiveTrue();
     }
@@ -23,6 +27,7 @@ public class ProductService {
         return productRepository.findAllNotDeleted();
     }
 
+    @Cacheable(value = CacheConfig.PRODUCTS_CACHE, key = "#id")
     public Product getById(String id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
@@ -66,6 +71,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
     public Product create(Product product) {
         if (product.getSku() == null || product.getSku().isBlank()) {
             product.setSku(generateSku(product));
@@ -81,6 +87,10 @@ public class ProductService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#id"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public Product update(String id, Product updates) {
         Product existing = getById(id);
         existing.setName(updates.getName());
@@ -119,35 +129,59 @@ public class ProductService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#id"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public Product toggleActive(String id) {
-        Product product = getById(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
         product.setIsActive(!product.getIsActive());
         return productRepository.save(product);
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#id"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public void softDelete(String id) {
-        Product product = getById(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
         product.setIsDeleted(true);
         product.setIsActive(false);
         productRepository.save(product);
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#productId"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public void updateImages(String productId, List<String> images) {
-        Product product = getById(productId);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
         product.setImages(images);
         productRepository.save(product);
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#productId"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public void updateVideoUrl(String productId, String videoUrl) {
-        Product product = getById(productId);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
         product.setVideoUrl(videoUrl);
         productRepository.save(product);
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#productId"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public void decrementStock(String productId, int quantity) {
         int updatedRows = productRepository.decrementStock(productId, quantity);
         if (updatedRows == 0) {
@@ -156,6 +190,10 @@ public class ProductService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#productId"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public void incrementStock(String productId, int quantity) {
         productRepository.incrementStock(productId, quantity);
     }

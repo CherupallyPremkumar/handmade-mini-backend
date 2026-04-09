@@ -97,3 +97,28 @@ Feature: Shopping Cart
     Then the response is a list of 1 items
     When I GET "/api/cart/sess-b"
     Then the response is a list of 1 items
+
+  Scenario: Cart details endpoint returns enriched response
+    When I add product "Silk Saree" to cart "sess-detail" with quantity 1
+    And I GET "/api/cart/sess-detail/details"
+    Then the response status is 200
+    And the response JSON key "subtotal" is 850000
+    And the response JSON key "hasPriceChanges" is false
+    And the response JSON key "hasStockIssues" is false
+
+  Scenario: Cart details detects price change after admin updates product
+    When I add product "Silk Saree" to cart "sess-pricechange" with quantity 1
+    And the product "Silk Saree" sellingPrice is updated to 950000
+    And I GET "/api/cart/sess-pricechange/details"
+    Then the response status is 200
+    And the response JSON key "hasPriceChanges" is true
+    And the response JSON key "subtotal" is 950000
+    And the response JSON key "snapshotSubtotal" is 850000
+
+  Scenario: Accept price changes refreshes snapshot
+    When I add product "Silk Saree" to cart "sess-accept" with quantity 1
+    And the product "Silk Saree" sellingPrice is updated to 900000
+    And I POST "/api/cart/sess-accept/accept-prices" with empty body
+    Then the response status is 200
+    And the response JSON key "hasPriceChanges" is false
+    And the response JSON key "subtotal" is 900000

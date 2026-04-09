@@ -64,6 +64,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/cms/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/settings/public").permitAll()
 
+                        // Public: read policy pages
+                        .requestMatchers(HttpMethod.GET, "/api/policies/**").permitAll()
+
                         // Public: health check
                         .requestMatchers("/actuator/health").permitAll()
 

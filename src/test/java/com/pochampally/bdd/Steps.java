@@ -97,6 +97,11 @@ public class Steps {
         w.postAuth(url, body);
     }
 
+    @When("I POST {string} with empty body")
+    public void postEmpty(String url) throws Exception {
+        w.post(url, "{}");
+    }
+
     @When("I GET {string}")
     public void getUrl(String url) throws Exception {
         w.get(url);
@@ -172,6 +177,16 @@ public class Steps {
     public void productStockIs(String name, int expected) {
         int actual = w.products.findById(w.productId(name)).orElseThrow().getStock();
         assertThat(actual).isEqualTo(expected);
+    }
+
+    @When("the product {string} sellingPrice is updated to {long}")
+    public void updateProductPrice(String name, long newPrice) {
+        var p = w.products.findById(w.productId(name)).orElseThrow();
+        p.setSellingPrice(newPrice);
+        w.products.save(p);
+        // Evict caches so cart sees fresh price
+        w.cacheManager.getCache("products").evict(p.getId());
+        w.cacheManager.getCache("productLists").clear();
     }
 
     // ═══════════════════════════════════════════════
@@ -320,7 +335,17 @@ public class Steps {
 
     @Then("the response JSON key {string} is {int}")
     public void jsonInt(String key, int expected) throws Exception {
-        assertThat(w.jsonKeyInt(key)).isEqualTo(expected);
+        assertThat(w.jsonKeyLong(key)).isEqualTo((long) expected);
+    }
+
+    @Then("the response JSON key {string} is true")
+    public void jsonTrue(String key) throws Exception {
+        assertThat(w.jsonBody().get(key).asBoolean()).isTrue();
+    }
+
+    @Then("the response JSON key {string} is false")
+    public void jsonFalse(String key) throws Exception {
+        assertThat(w.jsonBody().get(key).asBoolean()).isFalse();
     }
 
     @Then("the response JSON key {string} is not empty")
