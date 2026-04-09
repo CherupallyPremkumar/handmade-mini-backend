@@ -26,6 +26,7 @@ public class OrderService {
     private final RazorpayService razorpayService;
     private final SettingsService settingsService;
     private final EmailService emailService;
+    private final CouponService couponService;
 
     // Fallback only — real value from settingsService.getInt("payment_timeout_minutes")
 
@@ -82,7 +83,7 @@ public class OrderService {
 
             long itemTotal = product.getSellingPrice() * qty;
             subtotal += itemTotal;
-            gstAmount += (itemTotal * product.getGstPct()) / 100;
+            gstAmount += Math.round((itemTotal * product.getGstPct()) / 100.0);
 
             OrderItem orderItem = OrderItem.builder()
                     .productId(product.getId())
@@ -136,7 +137,7 @@ public class OrderService {
 
             long itemTotal = product.getSellingPrice() * cartItem.getQuantity();
             subtotal += itemTotal;
-            gstAmount += (itemTotal * product.getGstPct()) / 100;
+            gstAmount += Math.round((itemTotal * product.getGstPct()) / 100.0);
 
             OrderItem orderItem = OrderItem.builder()
                     .productId(product.getId())
@@ -230,6 +231,17 @@ public class OrderService {
                 order.getOrderNumber(), order.getItems().size());
 
         Order saved = orderRepository.save(order);
+
+        // Record coupon usage (non-blocking)
+        if (saved.getCouponCode() != null && !saved.getCouponCode().isBlank()) {
+            try {
+                couponService.recordUsage(saved.getCouponCode(),
+                        saved.getCustomerEmail() != null ? saved.getCustomerEmail() : "unknown",
+                        saved.getId());
+            } catch (Exception e) {
+                log.warn("Failed to record coupon usage for {}: {}", saved.getOrderNumber(), e.getMessage());
+            }
+        }
 
         // Send order emails (non-blocking)
         try {
@@ -358,6 +370,16 @@ public class OrderService {
         }
 
         return saved;
+    }
+
+    @Transactional
+    public Order applyCoupon(String orderId, String couponCode, long discountAmount, long newTotal) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+        order.setCouponCode(couponCode);
+        order.setDiscountAmount(discountAmount);
+        order.setTotalAmount(newTotal);
+        return orderRepository.save(order);
     }
 
     @Transactional

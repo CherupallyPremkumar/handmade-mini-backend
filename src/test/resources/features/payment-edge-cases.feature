@@ -114,13 +114,12 @@ Feature: Payment Edge Cases
     When I GET "/api/checkout/payment-callback"
     Then the response status is 302
 
-  Scenario: GET payment-callback with order_id marks order failed
+  Scenario: GET payment-callback redirects without cancelling order (unsigned)
     Given I am logged in as "getfail@test.com" with password "Secret@123"
     And I have placed an order for "Edge Saree" quantity 1
     When I GET payment-callback with the order's Razorpay ID
     Then the response status is 302
-    And the order payment status is "failed"
-    And the order status is now "CANCELLED"
+    And the order status is now "PENDING_PAYMENT"
 
   # ─── Pending Order Spam Prevention ───
 

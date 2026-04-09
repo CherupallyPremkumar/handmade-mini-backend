@@ -85,7 +85,7 @@ public class Order {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
-    private OrderStatus status = OrderStatus.PLACED;
+    private OrderStatus status = OrderStatus.PENDING_PAYMENT;
 
     @Column(name = "tracking_number", length = 50)
     private String trackingNumber;

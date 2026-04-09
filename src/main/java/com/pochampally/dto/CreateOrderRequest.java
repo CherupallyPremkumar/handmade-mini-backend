@@ -14,6 +14,7 @@ public class CreateOrderRequest {
     private String addressId;
     private List<OrderItemRequest> items;
     private String sessionId;
+    private String couponCode;
 
     @Data
     public static class OrderItemRequest {
