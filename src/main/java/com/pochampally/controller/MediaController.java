@@ -1,6 +1,8 @@
 package com.pochampally.controller;
 
+import com.pochampally.entity.Product;
 import com.pochampally.service.ImageStorageService;
+import com.pochampally.service.LambdaInvokerService;
 import com.pochampally.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ public class MediaController {
 
     private final ImageStorageService imageStorageService;
     private final ProductService productService;
+    private final LambdaInvokerService lambdaInvokerService;
 
     /**
      * Generate a presigned upload URL for an image.
@@ -93,21 +96,45 @@ public class MediaController {
     }
 
     /**
-     * Confirm video upload complete — save the URL to the product.
+     * Confirm video upload complete — the video is in temp-videos/ at this point.
+     * Saves the temp URL to the product, marks status COMPRESSING, and invokes
+     * the compression Lambda asynchronously. Lambda will call back via the
+     * compression-done webhook when the compressed version is ready.
      */
     @PostMapping("/confirm-video")
     public ResponseEntity<?> confirmVideo(@RequestBody Map<String, String> body) {
         String productId = body.get("productId");
         String cdnUrl = body.get("cdnUrl");
+        String tempKey = body.get("key"); // e.g. "temp-videos/uuid.mp4"
 
-        if (productId == null || cdnUrl == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "productId and cdnUrl required"));
+        if (productId == null || cdnUrl == null || tempKey == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "productId, cdnUrl and key required"));
         }
 
-        productService.updateVideoUrl(productId, cdnUrl);
+        // Validate the key is in temp-videos/ to prevent spoofing final URLs
+        if (!tempKey.startsWith("temp-videos/")) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Invalid video key — must be in temp-videos/"));
+        }
 
-        log.info("Confirmed video for product {}: {}", productId, cdnUrl);
-        return ResponseEntity.ok(Map.of("videoUrl", cdnUrl));
+        // Save temp URL and mark as COMPRESSING
+        productService.updateVideoStatus(productId, cdnUrl, Product.VideoStatus.COMPRESSING);
+
+        // Fire-and-forget Lambda invocation
+        boolean invoked = lambdaInvokerService.invokeVideoCompression(productId, tempKey);
+        if (!invoked) {
+            // Lambda not configured — keep temp URL as-is and mark READY so admin can still see the video
+            // (legacy mode when Lambda is disabled)
+            log.warn("Lambda compression unavailable — keeping temp video for product {}", productId);
+            productService.updateVideoStatus(productId, cdnUrl, Product.VideoStatus.READY);
+        }
+
+        log.info("Confirmed video for product {} (status={}): {}",
+                productId, invoked ? "COMPRESSING" : "READY", cdnUrl);
+        return ResponseEntity.ok(Map.of(
+                "videoUrl", cdnUrl,
+                "videoStatus", invoked ? "COMPRESSING" : "READY"));
     }
 
     /**

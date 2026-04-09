@@ -24,5 +24,6 @@
     <include file="db/changelog/017-abandoned-cart-support.xml"/>
     <include file="db/changelog/018-create-policies.xml"/>
     <include file="db/changelog/019-add-cart-price-snapshot.xml"/>
+    <include file="db/changelog/020-add-video-status.xml"/>
 
 </databaseChangeLog>

@@ -60,6 +60,9 @@ public class SecurityConfig {
                         // Public: payment webhooks
                         .requestMatchers("/api/webhooks/**").permitAll()
 
+                        // Public: Lambda compression callback (HMAC-authenticated, not JWT)
+                        .requestMatchers(HttpMethod.POST, "/api/admin/videos/compression-done").permitAll()
+
                         // Public: CMS (banners, categories) + public settings
                         .requestMatchers(HttpMethod.GET, "/api/cms/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/settings/public").permitAll()

@@ -99,6 +99,13 @@
             <version>2.25.0</version>
         </dependency>
 
+        <!-- AWS Lambda SDK — async invoke for video compression -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>lambda</artifactId>
+            <version>2.25.0</version>
+        </dependency>
+
         <!-- PDF Generation -->
         <dependency>
             <groupId>com.github.librepdf</groupId>

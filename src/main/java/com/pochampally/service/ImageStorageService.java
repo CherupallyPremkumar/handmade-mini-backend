@@ -69,6 +69,8 @@ public class ImageStorageService {
 
     /**
      * Generate a presigned PUT URL for direct browser-to-R2 video upload.
+     * Videos land in temp-videos/ so the Lambda compressor can pick them up,
+     * compress with FFmpeg, and move to the final videos/{productId}/ location.
      */
     public Map<String, String> generatePresignedVideoUrl(String productId, String contentType, String filename) {
         if (!ALLOWED_VIDEO_TYPES.contains(contentType)) {
@@ -76,12 +78,13 @@ public class ImageStorageService {
         }
 
         String extension = extractExtension(filename);
-        String key = "videos/" + productId + "/" + UUID.randomUUID() + extension;
-        String cdnUrl = "https://" + publicDomain + "/" + key;
+        // Upload to temp-videos/ — Lambda will move to videos/{productId}/ after compression
+        String tempKey = "temp-videos/" + UUID.randomUUID() + extension;
+        String tempCdnUrl = "https://" + publicDomain + "/" + tempKey;
 
         PutObjectRequest putRequest = PutObjectRequest.builder()
                 .bucket(bucket)
-                .key(key)
+                .key(tempKey)
                 .contentType(contentType)
                 .build();
 
@@ -92,8 +95,8 @@ public class ImageStorageService {
 
         String presignedUrl = s3Presigner.presignPutObject(presignRequest).url().toString();
 
-        log.info("Generated presigned video URL for product {}: {}", productId, key);
-        return Map.of("uploadUrl", presignedUrl, "cdnUrl", cdnUrl, "key", key);
+        log.info("Generated presigned video URL for product {}: {}", productId, tempKey);
+        return Map.of("uploadUrl", presignedUrl, "cdnUrl", tempCdnUrl, "key", tempKey);
     }
 
     /**

@@ -182,6 +182,19 @@ public class ProductService {
             @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#productId"),
             @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
     })
+    public void updateVideoStatus(String productId, String videoUrl, Product.VideoStatus status) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
+        product.setVideoUrl(videoUrl);
+        product.setVideoStatus(status);
+        productRepository.save(product);
+    }
+
+    @Transactional
+    @org.springframework.cache.annotation.Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#productId"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public void decrementStock(String productId, int quantity) {
         int updatedRows = productRepository.decrementStock(productId, quantity);
         if (updatedRows == 0) {

@@ -643,4 +643,93 @@ public class Steps {
             """.formatted(name);
         w.putAuth("/api/admin/products/" + id, body);
     }
+
+    // ═══════════════════════════════════════════════
+    //  VIDEO COMPRESSION WEBHOOK
+    // ═══════════════════════════════════════════════
+
+    private static final String TEST_VIDEO_WEBHOOK_SECRET = "test-video-webhook-secret-do-not-use-in-prod";
+    private String pendingWebhookBody;
+
+    @Given("a video webhook secret is configured")
+    public void configureVideoWebhookSecret() {
+        org.springframework.test.util.ReflectionTestUtils.setField(
+                w.videoWebhookController, "webhookSecret", TEST_VIDEO_WEBHOOK_SECRET);
+    }
+
+    @Given("the video webhook secret is NOT configured")
+    public void clearVideoWebhookSecret() {
+        org.springframework.test.util.ReflectionTestUtils.setField(
+                w.videoWebhookController, "webhookSecret", "");
+    }
+
+    @Given("product {string} starts with videoStatus {string}")
+    public void productStartsWithVideoStatus(String name, String status) {
+        var p = w.products.findById(w.productId(name)).orElseThrow();
+        p.setVideoStatus(com.pochampally.entity.Product.VideoStatus.valueOf(status));
+        if ("COMPRESSING".equals(status) || "READY".equals(status) || "FAILED".equals(status)) {
+            if (p.getVideoUrl() == null) {
+                p.setVideoUrl("https://cdn.example.com/temp-videos/initial.mp4");
+            }
+        }
+        w.products.saveAndFlush(p);
+    }
+
+    @Then("product {string} has videoStatus {string}")
+    public void productVideoStatusIs(String name, String expected) {
+        var p = w.products.findById(w.productId(name)).orElseThrow();
+        assertThat(p.getVideoStatus().name()).isEqualTo(expected);
+    }
+
+    @Then("product {string} videoUrl is {string}")
+    public void productVideoUrlIs(String name, String expected) {
+        var p = w.products.findById(w.productId(name)).orElseThrow();
+        assertThat(p.getVideoUrl()).isEqualTo(expected);
+    }
+
+    @When("I POST {string} with video webhook body:")
+    public void prepareVideoWebhookBody(String url, String body) {
+        // Replace PLACEHOLDER with real product ID from the first created product
+        String realProductId = w.productIds.values().iterator().next();
+        this.pendingWebhookBody = body.replace("PLACEHOLDER", realProductId);
+        // Store the URL too — actual POST happens in the next step
+        this.pendingWebhookUrl = url;
+    }
+
+    private String pendingWebhookUrl;
+
+    @When("without webhook signature")
+    public void postVideoWebhookNoSig() throws Exception {
+        w.call(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .post(pendingWebhookUrl)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content(pendingWebhookBody));
+    }
+
+    @When("with invalid webhook signature")
+    public void postVideoWebhookInvalidSig() throws Exception {
+        w.call(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .post(pendingWebhookUrl)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .header("X-Webhook-Signature", "invalid-signature-0000")
+                .content(pendingWebhookBody));
+    }
+
+    @When("with valid webhook signature")
+    public void postVideoWebhookValidSig() throws Exception {
+        String signature = computeHmacSha256(pendingWebhookBody, TEST_VIDEO_WEBHOOK_SECRET);
+        w.call(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .post(pendingWebhookUrl)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .header("X-Webhook-Signature", signature)
+                .content(pendingWebhookBody));
+    }
+
+    private String computeHmacSha256(String body, String secret) throws Exception {
+        javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+        mac.init(new javax.crypto.spec.SecretKeySpec(
+                secret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
+        byte[] computed = mac.doFinal(body.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        return java.util.HexFormat.of().formatHex(computed);
+    }
 }

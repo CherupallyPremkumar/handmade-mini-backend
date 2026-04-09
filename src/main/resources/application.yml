@@ -53,11 +53,20 @@ resend:
 
 # AWS SES (alternative — needs production access approval)
 aws:
+  region: ${AWS_REGION:ap-south-1}
   ses:
     access-key: ${SES_ACCESS_KEY:}
     secret-key: ${SES_SECRET_KEY:}
     region: ${SES_REGION:ap-south-1}
     from-email: ${SES_FROM_EMAIL:}
+  lambda:
+    # Async video compression Lambda — empty = feature disabled (fallback: video uploaded as-is)
+    video-compressor-arn: ${LAMBDA_VIDEO_COMPRESSOR_ARN:}
+    # Shared secret for HMAC-SHA256 verification of Lambda webhook callbacks
+    webhook-secret: ${LAMBDA_WEBHOOK_SECRET:}
+    # Optional explicit credentials (falls back to default chain if empty — use EC2 IAM role in prod)
+    access-key: ${AWS_LAMBDA_ACCESS_KEY:}
+    secret-key: ${AWS_LAMBDA_SECRET_KEY:}
 
 # Razorpay configuration
 razorpay:
