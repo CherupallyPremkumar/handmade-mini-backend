@@ -33,6 +33,14 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
+  data:
+    redis:
+      url: ${REDIS_URL:}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
 # Cloudflare R2 (S3-compatible) image storage
 cloudflare:
   r2:
