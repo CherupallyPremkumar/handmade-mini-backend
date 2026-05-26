@@ -109,6 +109,12 @@ public class CouponService {
     @Transactional
     public Coupon create(Coupon coupon) {
         coupon.setCode(coupon.getCode().toUpperCase().trim());
+        if (coupon.getIsActive() == null) {
+            coupon.setIsActive(true);
+        }
+        if (coupon.getUsedCount() == null) {
+            coupon.setUsedCount(0);
+        }
         return couponRepository.save(coupon);
     }
 

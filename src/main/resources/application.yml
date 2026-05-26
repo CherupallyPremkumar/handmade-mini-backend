@@ -85,3 +85,27 @@ logging:
   level:
     com.homebase_db: INFO
     org.hibernate.SQL: WARN
+
+chenile:
+  module:
+    name: pochampally
+  pre:
+    processors:
+  post:
+    processors:
+  exception:
+    handler: chenileExceptionHandler
+  interceptors:
+    path: org/chenile/core/chenile-core.xml
+  base:
+    url:
+  service:
+    json:
+      package: "classpath*:com/homebase/mini/product/service/*.json,classpath*:org/chenile/**/service/*.json"
+  event:
+    json:
+      package: "classpath*:com/homebase/mini/product/event/*.json"
+  file:
+    watch:
+      json:
+        package: "classpath*:org/chenile/core/test/filewatch/*.json"

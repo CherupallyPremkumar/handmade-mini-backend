@@ -1,0 +1,39 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.homebase.mini.product</groupId>
+		<artifactId>product-parent</artifactId>
+		<version>${revision}</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<artifactId>product-api</artifactId>
+	<packaging>jar</packaging>
+
+	<name>Product API Model and Interfaces</name>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.chenile</groupId>
+			<artifactId>workflow-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.chenile</groupId>
+			<artifactId>jpa-utils</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>jakarta.validation</groupId>
+			<artifactId>jakarta.validation-api</artifactId>
+			<version>3.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.15.3</version>
+		</dependency>
+	</dependencies>
+</project>

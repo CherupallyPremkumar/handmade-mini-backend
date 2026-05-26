@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.chenile</groupId>
+    <artifactId>chenile-parent</artifactId>
+    <version>2.1.21</version>
+  </parent>
+  <groupId>com.homebase.mini.product</groupId>
+  <artifactId>product-parent</artifactId>
+  <version>0.0.1</version>
+  <packaging>pom</packaging>
+  <name>All Modules that belong to the Product</name>
+  <description>Modules execution project and Parent Pom</description>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+    </license>
+  </licenses>
+  <modules>
+    <module>product-api</module>
+    <module>product-service</module>
+    <module>product-query</module>
+  </modules>
+  <properties>
+    <product.version>0.0.1</product.version>
+    <revision>0.0.1</revision>
+  </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.homebase.mini.product</groupId>
+        <artifactId>product-service</artifactId>
+        <version>0.0.1</version>
+      </dependency>
+      <dependency>
+        <groupId>com.homebase.mini.product</groupId>
+        <artifactId>product-api</artifactId>
+        <version>0.0.1</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>

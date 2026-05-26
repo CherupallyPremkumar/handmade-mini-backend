@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.homebase.mini.product</groupId>
+    <artifactId>product-parent</artifactId>
+    <version>0.0.1</version>
+  </parent>
+  <groupId>com.homebase.mini.product</groupId>
+  <artifactId>product-api</artifactId>
+  <version>0.0.1</version>
+  <name>Product API Model and Interfaces</name>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+    </license>
+  </licenses>
+  <dependencies>
+    <dependency>
+      <groupId>org.chenile</groupId>
+      <artifactId>workflow-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.chenile</groupId>
+      <artifactId>jpa-utils</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.validation</groupId>
+      <artifactId>jakarta.validation-api</artifactId>
+      <version>3.0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.15.3</version>
+    </dependency>
+  </dependencies>
+</project>

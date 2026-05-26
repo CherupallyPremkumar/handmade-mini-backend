@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<states>
+    <enablement-strategy componentName="productConfigBasedEnablementStrategy"/>
+    <default-transition-action componentName="productBaseTransitionAction"/>
+    <add-state-tag tag="status" manualState="true"/>
+    <add-transition-tag tag="on-action" eventIdTag="id" newStateIdTag="move-to"/>
+
+    <flow id='product-flow' default='true'>
+        <entry-action componentName="productEntryAction"/>
+        <exit-action componentName="productExitAction"/>
+
+        <!-- DRAFT State -->
+        <status id='DRAFT' initialState='true'>
+            <on-action id='submitForReview' move-to='UNDER_REVIEW'/>
+            <on-action id='delete' move-to='DELETED'/>
+        </status>
+
+        <!-- UNDER_REVIEW State -->
+        <status id='UNDER_REVIEW'>
+            <on-action id='approve' move-to='ACTIVE'/>
+            <on-action id='reject' move-to='DRAFT'/>
+        </status>
+
+        <!-- ACTIVE State -->
+        <status id='ACTIVE'>
+            <on-action id='deactivate' move-to='INACTIVE'/>
+            <on-action id='delete' move-to='DELETED'/>
+        </status>
+
+        <!-- INACTIVE State -->
+        <status id='INACTIVE'>
+            <on-action id='activate' move-to='ACTIVE'/>
+            <on-action id='delete' move-to='DELETED'/>
+        </status>
+
+        <!-- DELETED State -->
+        <status id='DELETED' />
+    </flow>
+</states>

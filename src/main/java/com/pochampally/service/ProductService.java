@@ -11,7 +11,22 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Service
+/**
+ * @deprecated  VERSION 1 — DO NOT USE IN NEW CODE.
+ * <p>
+ * This service is deprecated as part of the migration to Washington Two (v2).
+ * All product business logic has been moved to the new Chenile-based product module:
+ * <ul>
+ *   <li>SKU generation  → {@code com.homebase.mini.product.service.ProductSkuService}</li>
+ *   <li>Create/Update  → {@code com.homebase.mini.product.service.cmds.*} (STM actions)</li>
+ *   <li>Stock mgmt     → {@code com.homebase.mini.product.service.ProductStockService}</li>
+ *   <li>Reads/queries  → Query module via {@code POST /q/products}, {@code POST /q/product-by-id}</li>
+ * </ul>
+ * Writes go through {@code PATCH /product/{id}/{eventID}} (Chenile StateEntityService).
+ * </p>
+ */
+@Deprecated(since = "2.0", forRemoval = false)
+@Service("legacyProductService")
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ProductService {
@@ -75,6 +90,15 @@ public class ProductService {
     public Product create(Product product) {
         if (product.getSku() == null || product.getSku().isBlank()) {
             product.setSku(generateSku(product));
+        }
+        if (product.getIsActive() == null) {
+            product.setIsActive(true);
+        }
+        if (product.getIsDeleted() == null) {
+            product.setIsDeleted(false);
+        }
+        if (product.getCategory() == null) {
+            product.setCategory(Product.Category.SAREE);
         }
         return productRepository.save(product);
     }

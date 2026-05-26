@@ -12,7 +12,25 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController
+/**
+ * @deprecated  VERSION 1 \u2014 DO NOT USE IN NEW CODE.
+ * <p>
+ * This controller is deprecated as part of the migration to Washington Two (v2).
+ * <br>
+ * <strong>New API routes (v2):</strong>
+ * <ul>
+ *   <li>List products   : {@code POST /q/products}         (Chenile QueryController)</li>
+ *   <li>Get by ID       : {@code POST /q/product-by-id}    (Chenile QueryController)</li>
+ *   <li>Get related     : {@code POST /q/related-products} (Chenile QueryController)</li>
+ *   <li>Create product  : {@code POST /product}            (Chenile StateEntityService)</li>
+ *   <li>Update/events   : {@code PATCH /product/{id}/{eventID}} (Chenile StateEntityService)</li>
+ * </ul>
+ * The endpoints in this class ({@code /api/products}, {@code /api/admin/products}) are
+ * kept alive only for backward compatibility and will be removed in a future release.
+ * </p>
+ */
+@Deprecated(since = "2.0", forRemoval = false)
+@RestController("legacyProductController")
 @RequiredArgsConstructor
 public class ProductController {
 

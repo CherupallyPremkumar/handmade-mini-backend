@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.homebase.mini.product</groupId>
+		<artifactId>product-parent</artifactId>
+		<version>${revision}</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+	
+	<artifactId>product-query-service</artifactId>
+	<packaging>jar</packaging>
+	<name>Query Service Implementations for Product</name>
+	<description>Query Service Implementations for Product using MyBatis</description>
+
+	<dependencies>	
+		<!-- Sibling dependencies -->
+		<dependency>
+			<groupId>com.homebase.mini.product</groupId>
+			<artifactId>product-api</artifactId>
+		</dependency>
+
+		<!-- Chenile & Spring Web -->
+		<dependency>
+			<groupId>org.chenile</groupId>
+			<artifactId>query-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.chenile</groupId>
+			<artifactId>chenile-http</artifactId>
+		</dependency>
+
+		<!-- MyBatis and Jackson dependencies -->
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis</artifactId>
+			<version>3.5.15</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+
+		<!-- Test dependencies -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.chenile</groupId>
+			<artifactId>chenile-query-controller</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.chenile</groupId>
+			<artifactId>cucumber-utils</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.vintage</groupId>
+			<artifactId>junit-vintage-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Product">
+
+    <resultMap id="productResult" type="com.homebase.mini.product.model.Product">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="secondaryDescription" column="secondary_description"/>
+        <result property="category" column="category"/>
+        <result property="fabric" column="fabric"/>
+        <result property="weaveType" column="weave_type"/>
+        <result property="size" column="size"/>
+        <result property="lengthMeters" column="length_meters"/>
+        <result property="blousePiece" column="blouse_piece"/>
+        <result property="mrp" column="mrp"/>
+        <result property="sellingPrice" column="selling_price"/>
+        <result property="discountPct" column="discount_pct"/>
+        <result property="stock" column="stock"/>
+        <result property="images" column="images" typeHandler="com.homebase.mini.product.query.service.handler.JsonStringListTypeHandler"/>
+        <result property="videoUrl" column="video_url"/>
+        <result property="videoStatus" column="video_status"/>
+        <result property="hsnCode" column="hsn_code"/>
+        <result property="gstPct" column="gst_pct"/>
+        <result property="averageRating" column="average_rating"/>
+        <result property="reviewCount" column="review_count"/>
+        <result property="weightGrams" column="weight_grams"/>
+        <result property="widthInches" column="width_inches"/>
+        <result property="blouseLengthMeters" column="blouse_length_meters"/>
+        <result property="occasion" column="occasion"/>
+        <result property="workType" column="work_type"/>
+        <result property="pattern" column="pattern"/>
+        <result property="bodyColor" column="body_color"/>
+        <result property="borderColor" column="border_color"/>
+        <result property="palluColor" column="pallu_color"/>
+        <result property="careInstructions" column="care_instructions"/>
+        <result property="certification" column="certification"/>
+        <result property="sku" column="sku"/>
+        <result property="tags" column="tags"/>
+        <result property="isActive" column="is_active"/>
+        <result property="isDeleted" column="is_deleted"/>
+    </resultMap>
+
+    <!-- Get all products (count) -->
+    <select id="getAll-count" resultType="int">
+        SELECT count(*) FROM homebase_db.products
+        <where>
+            <if test="isActive != null">
+                AND is_active = #{isActive}
+            </if>
+            <if test="isDeleted != null">
+                AND is_deleted = #{isDeleted}
+            </if>
+            <if test="fabric != null">
+                AND fabric = #{fabric}
+            </if>
+            <if test="weaveType != null">
+                AND weave_type = #{weaveType}
+            </if>
+            <if test="bodyColor != null">
+                AND body_color = #{bodyColor}
+            </if>
+            <if test="minPrice != null">
+                AND selling_price &gt;= #{minPrice}
+            </if>
+            <if test="maxPrice != null">
+                AND selling_price &lt;= #{maxPrice}
+            </if>
+            <if test="search != null and search != ''">
+                AND (name LIKE CONCAT('%', #{search}, '%') OR description LIKE CONCAT('%', #{search}, '%'))
+            </if>
+        </where>
+    </select>
+
+    <!-- Get all products -->
+    <select id="getAll" resultMap="productResult">
+        SELECT * FROM homebase_db.products
+        <where>
+            <if test="isActive != null">
+                AND is_active = #{isActive}
+            </if>
+            <if test="isDeleted != null">
+                AND is_deleted = #{isDeleted}
+            </if>
+            <if test="fabric != null">
+                AND fabric = #{fabric}
+            </if>
+            <if test="weaveType != null">
+                AND weave_type = #{weaveType}
+            </if>
+            <if test="bodyColor != null">
+                AND body_color = #{bodyColor}
+            </if>
+            <if test="minPrice != null">
+                AND selling_price &gt;= #{minPrice}
+            </if>
+            <if test="maxPrice != null">
+                AND selling_price &lt;= #{maxPrice}
+            </if>
+            <if test="search != null and search != ''">
+                AND (name LIKE CONCAT('%', #{search}, '%') OR description LIKE CONCAT('%', #{search}, '%'))
+            </if>
+        </where>
+        ${orderby} ${pagination}
+    </select>
+
+    <!-- Get product by ID -->
+    <select id="getById" resultMap="productResult">
+        SELECT * FROM homebase_db.products
+        WHERE id = #{id}
+    </select>
+
+    <!-- Get product by SKU -->
+    <select id="getBySku" resultMap="productResult">
+        SELECT * FROM homebase_db.products
+        WHERE sku = #{sku}
+    </select>
+
+    <!-- Get related products -->
+    <select id="findRelated" resultMap="productResult">
+        SELECT * FROM homebase_db.products
+        WHERE id != #{id}
+          AND is_active = true
+          AND is_deleted = false
+          AND (fabric = #{fabric} OR weave_type = #{weaveType})
+        LIMIT #{limit}
+    </select>
+
+</mapper>

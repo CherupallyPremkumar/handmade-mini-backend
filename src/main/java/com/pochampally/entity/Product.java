@@ -9,7 +9,7 @@ import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.List;
 
-@Entity
+@Entity(name = "LegacyProduct")
 @Table(name = "products", schema = "homebase_db", indexes = {
         @Index(name = "idx_products_category", columnList = "category"),
         @Index(name = "idx_products_fabric", columnList = "fabric"),
@@ -20,6 +20,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Deprecated
 public class Product {
 
     @Id
@@ -160,7 +161,7 @@ public class Product {
     @Builder.Default
     private Boolean isDeleted = false;
 
-    @Column(name = "created_time", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     private Instant createdTime;
 
     @Version

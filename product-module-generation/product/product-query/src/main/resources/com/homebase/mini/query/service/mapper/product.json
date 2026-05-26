@@ -1,0 +1,113 @@
+[
+  {
+    "id": "Product.getAll",
+    "name": "products",
+    "columnMetadata": {
+      "id": {
+        "name": "id",
+        "filterable": true,
+        "columnType": "Text"
+      },
+      "name": {
+        "name": "name",
+        "likeQuery": true,
+        "filterable": true,
+        "sortable": true,
+        "columnType": "Text"
+      },
+      "fabric": {
+        "name": "fabric",
+        "filterable": true,
+        "columnType": "Text"
+      },
+      "weaveType": {
+        "name": "weaveType",
+        "filterable": true,
+        "columnType": "Text"
+      },
+      "bodyColor": {
+        "name": "bodyColor",
+        "filterable": true,
+        "columnType": "Text"
+      },
+      "minPrice": {
+        "name": "minPrice",
+        "filterable": true,
+        "columnType": "Number"
+      },
+      "maxPrice": {
+        "name": "maxPrice",
+        "filterable": true,
+        "columnType": "Number"
+      },
+      "search": {
+        "name": "search",
+        "likeQuery": true,
+        "filterable": true,
+        "columnType": "Text"
+      },
+      "isActive": {
+        "name": "isActive",
+        "filterable": true,
+        "columnType": "CheckBox"
+      },
+      "isDeleted": {
+        "name": "isDeleted",
+        "filterable": true,
+        "columnType": "CheckBox"
+      }
+    },
+    "paginated": true,
+    "sortable": true
+  },
+  {
+    "id": "Product.getById",
+    "name": "product-by-id",
+    "columnMetadata": {
+      "id": {
+        "name": "id",
+        "filterable": true,
+        "columnType": "Text"
+      }
+    },
+    "paginated": false
+  },
+  {
+    "id": "Product.getBySku",
+    "name": "product-by-sku",
+    "columnMetadata": {
+      "sku": {
+        "name": "sku",
+        "filterable": true,
+        "columnType": "Text"
+      }
+    },
+    "paginated": false
+  },
+  {
+    "id": "Product.findRelated",
+    "name": "related-products",
+    "columnMetadata": {
+      "id": {
+        "name": "id",
+        "filterable": true,
+        "columnType": "Text"
+      },
+      "fabric": {
+        "name": "fabric",
+        "filterable": true,
+        "columnType": "Text"
+      },
+      "weaveType": {
+        "name": "weaveType",
+        "filterable": true,
+        "columnType": "Text"
+      },
+      "limit": {
+        "name": "limit",
+        "columnType": "Number"
+      }
+    },
+    "paginated": false
+  }
+]
