@@ -1,8 +1,12 @@
 package com.pochampally.service;
 
+import com.pochampally.config.CacheConfig;
 import com.pochampally.entity.Product;
 import com.pochampally.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +19,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
+    @Cacheable(value = CacheConfig.PRODUCT_LISTS_CACHE, key = "'active'")
     public List<Product> listActive() {
         return productRepository.findByIsActiveTrue();
     }
@@ -23,6 +28,7 @@ public class ProductService {
         return productRepository.findAllNotDeleted();
     }
 
+    @Cacheable(value = CacheConfig.PRODUCTS_CACHE, key = "#id")
     public Product getById(String id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
@@ -66,6 +72,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
     public Product create(Product product) {
         if (product.getSku() == null || product.getSku().isBlank()) {
             product.setSku(generateSku(product));
@@ -81,6 +88,10 @@ public class ProductService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#id"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public Product update(String id, Product updates) {
         Product existing = getById(id);
         existing.setName(updates.getName());
@@ -119,6 +130,10 @@ public class ProductService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#id"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public Product toggleActive(String id) {
         Product product = getById(id);
         product.setIsActive(!product.getIsActive());
@@ -126,6 +141,10 @@ public class ProductService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#id"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public void softDelete(String id) {
         Product product = getById(id);
         product.setIsDeleted(true);
@@ -134,6 +153,10 @@ public class ProductService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#productId"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public void updateImages(String productId, List<String> images) {
         Product product = getById(productId);
         product.setImages(images);
@@ -141,6 +164,10 @@ public class ProductService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#productId"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public void updateVideoUrl(String productId, String videoUrl) {
         Product product = getById(productId);
         product.setVideoUrl(videoUrl);
@@ -148,6 +175,10 @@ public class ProductService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#productId"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public void decrementStock(String productId, int quantity) {
         int updatedRows = productRepository.decrementStock(productId, quantity);
         if (updatedRows == 0) {
@@ -156,6 +187,10 @@ public class ProductService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.PRODUCTS_CACHE, key = "#productId"),
+            @CacheEvict(value = CacheConfig.PRODUCT_LISTS_CACHE, allEntries = true)
+    })
     public void incrementStock(String productId, int quantity) {
         productRepository.incrementStock(productId, quantity);
     }
