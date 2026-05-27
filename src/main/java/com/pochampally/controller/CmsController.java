@@ -1,5 +1,6 @@
 package com.pochampally.controller;
 
+import com.pochampally.config.CacheConfig;
 import com.pochampally.entity.Banner;
 import com.pochampally.entity.Category;
 import com.pochampally.repository.BannerRepository;
@@ -7,6 +8,8 @@ import com.pochampally.repository.CategoryRepository;
 import com.pochampally.service.ImageStorageService;
 import com.pochampally.service.SettingsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +28,7 @@ public class CmsController {
     // ═══ Public: Storefront ═══
 
     @GetMapping("/api/cms/banners")
+    @Cacheable(value = CacheConfig.BANNERS_CACHE, key = "'active'")
     public ResponseEntity<Map<String, Object>> activeBanners() {
         return ResponseEntity.ok(Map.of(
                 "banners", bannerRepository.findByIsActiveTrueOrderByPositionAsc(),
@@ -33,16 +37,19 @@ public class CmsController {
     }
 
     @GetMapping("/api/cms/categories")
+    @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "'active'")
     public ResponseEntity<List<Category>> activeCategories() {
         return ResponseEntity.ok(categoryRepository.findByIsActiveTrueOrderByPositionAsc());
     }
 
     @GetMapping("/api/cms/categories/home")
+    @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "'home'")
     public ResponseEntity<List<Category>> homeCategories() {
         return ResponseEntity.ok(categoryRepository.findByIsActiveTrueAndShowOnHomeTrueOrderByPositionAsc());
     }
 
     @GetMapping("/api/cms/categories/{slug}")
+    @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#slug")
     public ResponseEntity<Category> categoryBySlug(@PathVariable String slug) {
         return ResponseEntity.ok(categoryRepository.findBySlug(slug)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found: " + slug)));
@@ -56,6 +63,7 @@ public class CmsController {
     }
 
     @PostMapping("/api/admin/banners")
+    @CacheEvict(value = CacheConfig.BANNERS_CACHE, allEntries = true)
     public ResponseEntity<Banner> createBanner(@RequestBody Banner banner) {
         if (banner.getImageUrl() == null || banner.getImageUrl().isBlank()) {
             throw new IllegalArgumentException("Image URL is required");
@@ -68,6 +76,7 @@ public class CmsController {
     }
 
     @PutMapping("/api/admin/banners/{id}")
+    @CacheEvict(value = CacheConfig.BANNERS_CACHE, allEntries = true)
     public ResponseEntity<Banner> updateBanner(@PathVariable String id, @RequestBody Banner updates) {
         Banner banner = bannerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Banner not found"));
@@ -84,12 +93,14 @@ public class CmsController {
     }
 
     @DeleteMapping("/api/admin/banners/{id}")
+    @CacheEvict(value = CacheConfig.BANNERS_CACHE, allEntries = true)
     public ResponseEntity<Void> deleteBanner(@PathVariable String id) {
         bannerRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/api/admin/banners/{id}/toggle")
+    @CacheEvict(value = CacheConfig.BANNERS_CACHE, allEntries = true)
     public ResponseEntity<Banner> toggleBanner(@PathVariable String id) {
         Banner banner = bannerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Banner not found"));
@@ -105,6 +116,7 @@ public class CmsController {
     }
 
     @PostMapping("/api/admin/categories")
+    @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, allEntries = true)
     public ResponseEntity<Category> createCategory(@RequestBody Category category) {
         if (category.getName() == null || category.getName().isBlank()) {
             throw new IllegalArgumentException("Category name is required");
@@ -116,6 +128,7 @@ public class CmsController {
     }
 
     @PutMapping("/api/admin/categories/{id}")
+    @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, allEntries = true)
     public ResponseEntity<Category> updateCategory(@PathVariable String id, @RequestBody Category updates) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found"));
@@ -132,12 +145,14 @@ public class CmsController {
     }
 
     @DeleteMapping("/api/admin/categories/{id}")
+    @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, allEntries = true)
     public ResponseEntity<Void> deleteCategory(@PathVariable String id) {
         categoryRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/api/admin/categories/{id}/toggle")
+    @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, allEntries = true)
     public ResponseEntity<Category> toggleCategory(@PathVariable String id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found"));
