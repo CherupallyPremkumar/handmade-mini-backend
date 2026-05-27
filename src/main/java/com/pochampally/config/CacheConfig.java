@@ -27,6 +27,8 @@ public class CacheConfig {
 
     public static final String PRODUCTS_CACHE = "products";
     public static final String PRODUCT_LISTS_CACHE = "productLists";
+    public static final String BANNERS_CACHE = "cmsBanners";
+    public static final String CATEGORIES_CACHE = "cmsCategories";
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
@@ -48,10 +50,12 @@ public class CacheConfig {
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(jsonSerializer))
                 .disableCachingNullValues();
 
-        // Specific configurations for our key caches with 10 minutes TTL
+        // Specific configurations for our key caches
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
         cacheConfigurations.put(PRODUCTS_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(10)));
         cacheConfigurations.put(PRODUCT_LISTS_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(10)));
+        cacheConfigurations.put(BANNERS_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put(CATEGORIES_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(30)));
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)
