@@ -27,32 +27,38 @@ public class CmsController {
 
     // ═══ Public: Storefront ═══
 
+    // NOTE: cached methods return the response BODY, not ResponseEntity.
+    // Caching a ResponseEntity breaks on read — it has no JSON deserializer
+    // (SerializationException), which surfaced as 500s on cache hits.
+    //
+    // Banners is intentionally NOT @Cacheable: its heterogeneous Map body doesn't
+    // round-trip through the JSON type-serializer (missing @class). It's a single
+    // cheap query, so we just hit the DB.
     @GetMapping("/api/cms/banners")
-    @Cacheable(value = CacheConfig.BANNERS_CACHE, key = "'active'")
-    public ResponseEntity<Map<String, Object>> activeBanners() {
-        return ResponseEntity.ok(Map.of(
+    public Map<String, Object> activeBanners() {
+        return Map.of(
                 "banners", bannerRepository.findByIsActiveTrueOrderByPositionAsc(),
                 "scrollSeconds", settingsService.getInt("banner_scroll_seconds")
-        ));
+        );
     }
 
     @GetMapping("/api/cms/categories")
     @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "'active'")
-    public ResponseEntity<List<Category>> activeCategories() {
-        return ResponseEntity.ok(categoryRepository.findByIsActiveTrueOrderByPositionAsc());
+    public List<Category> activeCategories() {
+        return categoryRepository.findByIsActiveTrueOrderByPositionAsc();
     }
 
     @GetMapping("/api/cms/categories/home")
     @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "'home'")
-    public ResponseEntity<List<Category>> homeCategories() {
-        return ResponseEntity.ok(categoryRepository.findByIsActiveTrueAndShowOnHomeTrueOrderByPositionAsc());
+    public List<Category> homeCategories() {
+        return categoryRepository.findByIsActiveTrueAndShowOnHomeTrueOrderByPositionAsc();
     }
 
     @GetMapping("/api/cms/categories/{slug}")
     @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#slug")
-    public ResponseEntity<Category> categoryBySlug(@PathVariable String slug) {
-        return ResponseEntity.ok(categoryRepository.findBySlug(slug)
-                .orElseThrow(() -> new IllegalArgumentException("Category not found: " + slug)));
+    public Category categoryBySlug(@PathVariable String slug) {
+        return categoryRepository.findBySlug(slug)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found: " + slug));
     }
 
     // ═══ Admin: Banners ═══
