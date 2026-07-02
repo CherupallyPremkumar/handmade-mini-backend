@@ -33,6 +33,14 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
+  data:
+    redis:
+      url: ${REDIS_URL:}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
 # Google OAuth2 login — OPT-IN. Only enabled when GOOGLE_CLIENT_ID is set (see GoogleOAuthConfig).
 # Empty by default so the app boots normally in envs where Google login isn't configured.
 google:
