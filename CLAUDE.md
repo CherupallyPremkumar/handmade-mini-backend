@@ -11,8 +11,10 @@ Backend API for **dhanunjaiah.com** — an ecommerce store selling handwoven Poc
 - **PostgreSQL** (Supabase, schema: `homebase_db`)
 - **Razorpay** (payment gateway, redirect checkout + webhooks)
 - **Cloudflare R2** (image/video storage via S3-compatible API)
-- **Liquibase** (database migrations)
-- **Cucumber BDD** (98 test scenarios)
+- **Email**: pluggable provider — Resend (default) or AWS SES, switched via `EMAIL_PROVIDER`
+- **Redis** (optional — rate limiting / caching; falls back to in-memory when unset)
+- **Liquibase** (database migrations — 17 changelogs)
+- **Cucumber BDD** (test scenarios across auth, products, cart, checkout, orders, webhooks, coupons, reviews, wishlist)
 
 ## Architecture
 
@@ -21,29 +23,46 @@ src/main/java/com/pochampally/
 ├── config/
 │   ├── SecurityConfig.java      # CORS (from env), CSRF disabled, JWT filter, HSTS
 │   ├── JwtAuthFilter.java       # Reads JWT from httpOnly cookie OR Authorization header
-│   ├── LoginRateLimiter.java    # 5 attempts per IP per 60 seconds
+│   ├── RateLimiter.java         # Per-IP sliding-window limiter (login + payment verify)
+│   ├── CacheConfig.java         # Cache names/beans for products + product lists
 │   ├── R2Config.java            # S3Client + S3Presigner beans for Cloudflare R2
 │   └── GlobalExceptionHandler.java
 ├── controller/
-│   ├── AuthController.java      # Register/login (sets httpOnly cookie) + logout
-│   ├── ProductController.java   # Public: list/filter/search. Admin: CRUD
+│   ├── AuthController.java      # Register/login (sets httpOnly cookie), logout, email verify, password reset
+│   ├── ProductController.java   # Public: list/filter/search/related. Admin: CRUD
 │   ├── CartController.java      # Session-based cart (public, no auth)
-│   ├── CheckoutController.java  # Create order → Razorpay redirect → payment callback
-│   ├── OrderController.java     # Public: track. Auth: my orders. Admin: manage
+│   ├── CheckoutController.java  # Create order → Razorpay → verify-payment / payment-callback
+│   ├── OrderController.java     # Public: track. Auth: my orders. Admin: manage + status
+│   ├── AddressController.java   # Saved shipping addresses (auth)
+│   ├── WishlistController.java  # Add/remove/check wishlist (auth)
+│   ├── ReviewController.java    # Product reviews (verified-purchase gated) + admin moderation
+│   ├── CouponController.java    # Coupon validation/apply + admin CRUD
+│   ├── CmsController.java       # Banners + categories (public read, admin write)
+│   ├── SettingsController.java  # App settings (shipping, GST, email toggles) — admin
 │   ├── MediaController.java     # Presigned URL generation for direct R2 uploads
 │   ├── ImageController.java     # Legacy image upload (through server)
 │   ├── VideoController.java     # Legacy video upload (through server)
 │   └── RazorpayWebhookController.java  # payment.captured / payment.failed
 ├── dto/                         # Request/response DTOs with validation
-├── entity/                      # JPA entities (Product, Order, OrderItem, CartItem, User)
+├── entity/                      # Product, Order, OrderItem, CartItem, User, Address,
+│                                #   Wishlist, Review, Coupon, CouponUsage, Category, Banner, AppSetting
 ├── repository/                  # Spring Data JPA repositories
 └── service/
-    ├── OrderService.java        # PENDING_PAYMENT → PAID (stock decrement) → SHIPPED → DELIVERED
-    ├── ProductService.java      # CRUD + atomic stock decrement (WHERE stock >= qty)
-    ├── AuthService.java         # BCrypt + JWT generation
-    ├── RazorpayService.java     # Create orders, verify signatures (HMAC-SHA256, constant-time)
-    ├── ImageStorageService.java # Presigned URLs + legacy upload + delete
+    ├── OrderService.java        # PENDING_PAYMENT → PAID (stock decrement) → SHIPPED → DELIVERED; expiry sweep
+    ├── ProductService.java      # CRUD + atomic stock decrement (WHERE stock >= qty) + caching
+    ├── AuthService.java         # BCrypt + JWT generation + email verification + password reset
+    ├── RazorpayService.java     # Create orders, verify signatures (HMAC-SHA256, constant-time), refunds
     ├── CartService.java         # Session cart with stock validation
+    ├── AddressService.java      # Saved-address CRUD, ownership-scoped
+    ├── ReviewService.java       # Reviews, verified-purchase check, moderation
+    ├── CouponService.java       # Coupon validation, per-user usage limits
+    ├── SettingsService.java     # Typed app-settings accessor (getInt/getLong/get)
+    ├── AnalyticsService.java    # Admin dashboard stats (revenue, order counts)
+    ├── AbandonedCartService.java# Scheduled abandoned-cart reminder emails
+    ├── InvoiceService.java      # Order invoice generation
+    ├── EmailService.java        # Order/shipping/verification emails (delegates to provider)
+    ├── email/EmailProvider.java # Interface → ResendProvider / SesProvider
+    ├── ImageStorageService.java # Presigned URLs + legacy upload + delete
     ├── VideoStorageService.java # Video upload with magic byte validation
     └── JwtService.java          # JWT generate/validate (HMAC-SHA512)
 ```
@@ -78,6 +97,19 @@ src/main/java/com/pochampally/
 | `FRONTEND_URL` | `https://dhanunjaiah.com` |
 | `CORS_ORIGINS` | `https://dhanunjaiah.com,https://www.dhanunjaiah.com` |
 
+### Optional / feature env vars
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `PORT` | HTTP port | `8090` |
+| `EMAIL_PROVIDER` | `resend` or `ses` | `resend` |
+| `RESEND_API_KEY` / `RESEND_FROM_EMAIL` | Resend email | empty (emails skipped) |
+| `SES_ACCESS_KEY` / `SES_SECRET_KEY` / `SES_REGION` / `SES_FROM_EMAIL` | AWS SES email | empty / `ap-south-1` |
+| `REDIS_URL` / `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Redis (optional) | in-memory fallback |
+| `LIQUIBASE_CONTEXTS` | Liquibase contexts (e.g. `dev` seeds sample data) | `dev` |
+
+> Email is optional: if the provider isn't configured the app logs `… not configured — skipping` and continues. Order processing never blocks on email.
+
 ## Build & Test
 
 ```bash
@@ -86,16 +118,23 @@ mvn test                         # Run 98 BDD tests
 java -jar target/*.jar           # Run (all env vars must be set)
 ```
 
-## BDD Tests (98 scenarios)
+## BDD Tests (Cucumber — `mvn test`, runs green against H2/Testcontainers)
 
-| Feature | Scenarios | Coverage |
-|---|---|---|
-| Auth | 16 | Register, login, validation, rate limiting, JWT |
-| Products | 17 | CRUD, filters, search, admin auth, validation |
-| Cart | 13 | Add, merge, remove, stock validation, sessions |
-| Checkout | 14 | Order creation, GST, shipping, stock, PENDING_PAYMENT |
-| Orders | 15 | Tracking, status transitions, PII hidden, admin |
-| Webhooks | 11 | Signature verification, idempotency, stock decrement |
+Feature files live in `src/test/resources/features/`. Coverage:
+
+| Feature | Coverage |
+|---|---|
+| Auth | Register, login, validation, rate limiting, JWT, email verification, password reset |
+| Products | CRUD, filters, search, related, admin auth, validation |
+| Cart | Add, merge, remove, stock validation, sessions |
+| Checkout | Order creation, GST, shipping, stock, PENDING_PAYMENT |
+| Orders | Tracking, status transitions, PII hidden, admin |
+| Webhooks | Signature verification, idempotency, stock decrement |
+| Coupons | Validation, discount calc, per-user usage limits |
+| Reviews | Verified-purchase gating, moderation |
+| Wishlist | Add/remove/check, auth enforcement |
+
+> The original docs claimed exactly "98 scenarios"; the suite has grown since. Run `mvn test` for the current count — the last local run passed with exit code 0.
 
 ## Branching & Deployment
 

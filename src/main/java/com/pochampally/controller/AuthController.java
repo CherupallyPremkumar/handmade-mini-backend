@@ -1,12 +1,12 @@
 package com.pochampally.controller;
 
+import com.pochampally.config.AuthCookieService;
 import com.pochampally.config.RateLimiter;
 import com.pochampally.dto.AuthResponse;
 import com.pochampally.dto.LoginRequest;
 import com.pochampally.dto.RegisterRequest;
 import com.pochampally.entity.User;
 import com.pochampally.service.AuthService;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -25,15 +25,13 @@ public class AuthController {
 
     private final AuthService authService;
     private final RateLimiter loginRateLimiter;
-
-    private static final String AUTH_COOKIE = "dhn_token";
-    private static final int COOKIE_MAX_AGE = 24 * 60 * 60; // 24 hours
+    private final AuthCookieService authCookieService;
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> register(@Valid @RequestBody RegisterRequest request,
                                                          HttpServletResponse response) {
         AuthResponse authResponse = authService.register(request);
-        setAuthCookie(response, authResponse.getToken());
+        authCookieService.set(response, authResponse.getToken());
 
         return ResponseEntity.ok(Map.of(
                 "token", authResponse.getToken(),
@@ -60,7 +58,7 @@ public class AuthController {
         }
 
         AuthResponse authResponse = authService.login(request);
-        setAuthCookie(response, authResponse.getToken());
+        authCookieService.set(response, authResponse.getToken());
 
         return ResponseEntity.ok(Map.of(
                 "token", authResponse.getToken(),
@@ -124,14 +122,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(HttpServletResponse response) {
-        Cookie cookie = new Cookie(AUTH_COOKIE, "");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        cookie.setAttribute("SameSite", "None");
-        response.addCookie(cookie);
-
+        authCookieService.clear(response);
         return ResponseEntity.ok(Map.of("message", "Logged out"));
     }
 
@@ -148,16 +139,6 @@ public class AuthController {
                 "role", user.getRole().name(),
                 "emailVerified", user.getEmailVerified()
         ));
-    }
-
-    private void setAuthCookie(HttpServletResponse response, String token) {
-        Cookie cookie = new Cookie(AUTH_COOKIE, token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(COOKIE_MAX_AGE);
-        cookie.setAttribute("SameSite", "None");
-        response.addCookie(cookie);
     }
 
     private String resolveClientIp(HttpServletRequest request) {

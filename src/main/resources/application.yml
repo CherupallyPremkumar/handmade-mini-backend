@@ -33,6 +33,13 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
+# Google OAuth2 login — OPT-IN. Only enabled when GOOGLE_CLIENT_ID is set (see GoogleOAuthConfig).
+# Empty by default so the app boots normally in envs where Google login isn't configured.
+google:
+  oauth:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+
 # Cloudflare R2 (S3-compatible) image storage
 cloudflare:
   r2:
