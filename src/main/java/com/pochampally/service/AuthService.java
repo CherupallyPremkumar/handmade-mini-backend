@@ -72,6 +72,11 @@ public class AuthService {
             throw new AuthenticationException("Account is deactivated");
         }
 
+        // OAuth-only account has no local password — don't attempt a bcrypt match against null.
+        if (user.getPasswordHash() == null) {
+            throw new AuthenticationException("This account uses Google sign-in. Please continue with Google.");
+        }
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new AuthenticationException("Invalid email or password");
         }
@@ -160,6 +165,57 @@ public class AuthService {
     public User getUserById(String userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+    }
+
+    /**
+     * Find-or-create a user from a verified Google identity.
+     * Linking policy: match on email. Google has already verified email ownership,
+     * so linking an existing local account to Google is safe (no takeover risk).
+     * Returns the persisted user; the caller issues the JWT.
+     */
+    @Transactional
+    public User oauthFindOrCreate(String email, String name, String googleSub) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Google account did not provide an email");
+        }
+
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            user = User.builder()
+                    .name(name != null ? name : email.split("@")[0])
+                    .email(email)
+                    .passwordHash(null)                       // OAuth-only account
+                    .authProvider(User.AuthProvider.GOOGLE)
+                    .googleSub(googleSub)
+                    .role(User.Role.CUSTOMER)
+                    .isActive(true)
+                    .emailVerified(true)                      // Google-verified email
+                    .build();
+            user = userRepository.save(user);
+            log.info("Created new user via Google sign-in: {}", email);
+            return user;
+        }
+
+        if (!user.getIsActive()) {
+            throw new AuthenticationException("Account is deactivated");
+        }
+
+        // Link an existing (local) account to Google on first Google sign-in.
+        boolean changed = false;
+        if (user.getGoogleSub() == null && googleSub != null) {
+            user.setGoogleSub(googleSub);
+            changed = true;
+        }
+        if (!Boolean.TRUE.equals(user.getEmailVerified())) {
+            user.setEmailVerified(true);                      // Google verified it
+            changed = true;
+        }
+        if (changed) {
+            userRepository.save(user);
+            log.info("Linked existing account to Google sign-in: {}", email);
+        }
+        return user;
     }
 
     private String generateVerificationToken() {

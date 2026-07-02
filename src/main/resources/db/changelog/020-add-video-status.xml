@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="020-add-video-status" author="homebase_db">
+        <addColumn tableName="products" schemaName="homebase_db">
+            <column name="video_status" type="VARCHAR(20)" defaultValue="NONE">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="020-backfill-video-status" author="homebase_db">
+        <comment>
+            Existing products that already have a videoUrl are assumed to be
+            pre-compression-feature uploads, so mark them READY rather than NONE.
+        </comment>
+        <sql>
+            UPDATE homebase_db.products
+            SET video_status = 'READY'
+            WHERE video_url IS NOT NULL AND video_url != ''
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

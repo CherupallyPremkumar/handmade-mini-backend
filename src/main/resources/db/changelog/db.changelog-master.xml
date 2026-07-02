@@ -22,5 +22,9 @@
     <include file="db/changelog/015-create-reviews.xml"/>
     <include file="db/changelog/016-add-order-item-tax-fields.xml"/>
     <include file="db/changelog/017-abandoned-cart-support.xml"/>
+    <include file="db/changelog/018-create-policies.xml"/>
+    <include file="db/changelog/019-add-cart-price-snapshot.xml"/>
+    <include file="db/changelog/020-add-video-status.xml"/>
+    <include file="db/changelog/021-add-oauth-support.xml"/>
 
 </databaseChangeLog>

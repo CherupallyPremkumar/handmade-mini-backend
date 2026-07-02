@@ -1,15 +1,17 @@
 package com.pochampally.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -24,6 +26,11 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+    // Present only when Google login is configured (see GoogleOAuthConfig).
+    private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -38,6 +45,11 @@ public class SecurityConfig {
                                 .maxAgeInSeconds(31536000))
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // API backend: unauthenticated access to a protected resource returns 403.
+                // Without this, enabling oauth2Login would make Spring redirect (302) unauthenticated
+                // API calls to the Google login page. The OAuth flow is still triggered explicitly
+                // via /oauth2/authorization/google (the "Continue with Google" button).
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.FORBIDDEN)))
                 .authorizeHttpRequests(auth -> auth
                         // Public: auth endpoints
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/logout",
@@ -60,12 +72,21 @@ public class SecurityConfig {
                         // Public: payment webhooks
                         .requestMatchers("/api/webhooks/**").permitAll()
 
+                        // Public: Lambda compression callback (HMAC-authenticated, not JWT)
+                        .requestMatchers(HttpMethod.POST, "/api/admin/videos/compression-done").permitAll()
+
                         // Public: CMS (banners, categories) + public settings
                         .requestMatchers(HttpMethod.GET, "/api/cms/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/settings/public").permitAll()
 
+                        // Public: read policy pages
+                        .requestMatchers(HttpMethod.GET, "/api/policies/**").permitAll()
+
                         // Public: health check
                         .requestMatchers("/actuator/health").permitAll()
+
+                        // Public: Google OAuth2 login entry + callback (handled by Spring Security)
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
 
                         // Checkout: payment callback is public (Razorpay redirect — POST for success, GET for failure)
                         .requestMatchers(HttpMethod.POST, "/api/checkout/payment-callback").permitAll()
@@ -82,12 +103,20 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+        // Wire Google OAuth2 login only when configured (ClientRegistrationRepository bean present).
+        // When Google login isn't set up, this is skipped and password login is unaffected.
+        ClientRegistrationRepository clientRegistrationRepository = clientRegistrationRepositoryProvider.getIfAvailable();
+        if (clientRegistrationRepository != null) {
+            http.oauth2Login(oauth -> oauth
+                    .clientRegistrationRepository(clientRegistrationRepository)
+                    // Stateless: keep the in-flight auth request in a cookie, not the session
+                    .authorizationEndpoint(endpoint -> endpoint
+                            .authorizationRequestRepository(cookieAuthorizationRequestRepository))
+                    .successHandler(oAuth2LoginSuccessHandler)
+                    .failureHandler(oAuth2LoginFailureHandler));
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return http.build();
     }
 
     @org.springframework.beans.factory.annotation.Value("${app.cors-origins}")

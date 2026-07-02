@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="018-create-policies-table" author="homebase_db">
+        <createTable tableName="policies" schemaName="homebase_db">
+            <column name="slug" type="VARCHAR(50)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="meta_description" type="VARCHAR(500)"/>
+            <column name="content" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_time" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="018-seed-policies" author="homebase_db">
+        <insert tableName="policies" schemaName="homebase_db">
+            <column name="slug" value="privacy-policy"/>
+            <column name="title" value="Privacy Policy"/>
+            <column name="meta_description" value="Privacy policy for Dhanunjaiah Handlooms. How we collect, use, and protect your personal information."/>
+            <column name="content"><![CDATA[<h2>Information We Collect</h2>
+<p>When you use dhanunjaiah.com, we may collect the following information:</p>
+<ul>
+<li><strong>Account Information:</strong> Name, email address, phone number when you register</li>
+<li><strong>Order Information:</strong> Shipping address, payment details (processed securely by Razorpay), order history</li>
+<li><strong>Usage Data:</strong> Pages visited, products viewed, device information, IP address</li>
+</ul>
+<h2>How We Use Your Information</h2>
+<ul>
+<li>Process and deliver your orders</li>
+<li>Send order confirmations, shipping updates, and delivery notifications</li>
+<li>Provide customer support</li>
+<li>Improve our website and product offerings</li>
+<li>Send promotional emails (only with your consent — you can unsubscribe anytime)</li>
+</ul>
+<h2>Payment Security</h2>
+<p>All payments are processed securely through <strong>Razorpay</strong>. We do not store your credit card, debit card, or UPI details on our servers. Razorpay is PCI-DSS compliant and uses bank-grade encryption.</p>
+<h2>Data Sharing</h2>
+<p>We do <strong>not</strong> sell, trade, or rent your personal information to third parties. We may share data only with:</p>
+<ul>
+<li><strong>Payment processor</strong> (Razorpay) for processing transactions</li>
+<li><strong>Shipping partners</strong> for order delivery</li>
+<li><strong>Email service</strong> for transactional emails</li>
+</ul>
+<h2>Cookies</h2>
+<p>We use essential cookies to maintain your login session and shopping cart. We may use analytics cookies (Google Analytics) to understand website usage. You can disable cookies in your browser settings.</p>
+<h2>Data Security</h2>
+<p>We implement industry-standard security measures including:</p>
+<ul>
+<li>HTTPS encryption on all pages</li>
+<li>Secure httpOnly cookies for authentication</li>
+<li>Passwords stored with BCrypt hashing</li>
+<li>HMAC signature verification for payments</li>
+</ul>
+<h2>Your Rights</h2>
+<p>You have the right to:</p>
+<ul>
+<li>Access your personal data</li>
+<li>Correct inaccurate information</li>
+<li>Request deletion of your account and data</li>
+<li>Opt out of promotional communications</li>
+</ul>
+<p>To exercise these rights, contact us at <a href="mailto:ch.dhanunjaiah@gmail.com">ch.dhanunjaiah@gmail.com</a>.</p>
+<h2>Changes to This Policy</h2>
+<p>We may update this privacy policy from time to time. Changes will be posted on this page with the updated date.</p>
+<h2>Contact</h2>
+<p>Dhanunjaiah Handlooms<br/>Gattuppal, Nalgonda District<br/>Telangana 508253<br/>
+Email: <a href="mailto:ch.dhanunjaiah@gmail.com">ch.dhanunjaiah@gmail.com</a><br/>
+Phone: <a href="tel:+919440249456">+91 94402 49456</a></p>]]></column>
+        </insert>
+
+        <insert tableName="policies" schemaName="homebase_db">
+            <column name="slug" value="terms-and-conditions"/>
+            <column name="title" value="Terms &amp; Conditions"/>
+            <column name="meta_description" value="Terms and conditions for using Dhanunjaiah Handlooms ecommerce store."/>
+            <column name="content"><![CDATA[<h2>Acceptance of Terms</h2>
+<p>By accessing and using dhanunjaiah.com, you agree to be bound by these terms and conditions. If you do not agree, please do not use our website.</p>
+<h2>Products</h2>
+<ul>
+<li>All sarees are <strong>handwoven</strong>. Slight variations in color, pattern, and texture are natural and a mark of authenticity.</li>
+<li>Product images are as accurate as possible, but colors may vary slightly due to monitor settings and photography lighting.</li>
+<li>Product availability is subject to stock. We reserve the right to limit quantities.</li>
+</ul>
+<h2>Pricing</h2>
+<ul>
+<li>All prices are in Indian Rupees (INR) and include applicable GST</li>
+<li>Prices are subject to change without prior notice</li>
+<li>The price at the time of order placement will be the final price</li>
+</ul>
+<h2>Orders</h2>
+<ul>
+<li>An order is confirmed only after successful payment</li>
+<li>We reserve the right to cancel an order if the product is out of stock, payment verification fails, or we suspect fraudulent activity</li>
+<li>In case of cancellation by us, a full refund will be issued</li>
+</ul>
+<h2>Payment</h2>
+<ul>
+<li>We accept payments via Razorpay (Credit Card, Debit Card, UPI, Net Banking, Wallets)</li>
+<li>All transactions are secured with industry-standard encryption</li>
+<li>Payment must be completed within 30 minutes of order creation, after which the order will be automatically cancelled</li>
+</ul>
+<h2>User Accounts</h2>
+<ul>
+<li>You are responsible for maintaining the confidentiality of your account credentials</li>
+<li>You must provide accurate and complete information during registration</li>
+<li>We reserve the right to suspend or terminate accounts that violate these terms</li>
+</ul>
+<h2>Intellectual Property</h2>
+<p>All content on this website — including product images, descriptions, logos, and design — is the property of Dhanunjaiah Handlooms and protected by copyright laws. You may not reproduce, distribute, or use any content without written permission.</p>
+<h2>Limitation of Liability</h2>
+<p>Dhanunjaiah Handlooms shall not be liable for any indirect, incidental, or consequential damages arising from the use of our website or products, except as required by applicable Indian law.</p>
+<h2>Governing Law</h2>
+<p>These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts in Nalgonda, Telangana.</p>
+<h2>Contact</h2>
+<p>For questions about these terms:<br/>
+Email: <a href="mailto:ch.dhanunjaiah@gmail.com">ch.dhanunjaiah@gmail.com</a><br/>
+Phone: <a href="tel:+919440249456">+91 94402 49456</a></p>]]></column>
+        </insert>
+
+        <insert tableName="policies" schemaName="homebase_db">
+            <column name="slug" value="shipping-policy"/>
+            <column name="title" value="Shipping Policy"/>
+            <column name="meta_description" value="Shipping information for Dhanunjaiah Handlooms. Free shipping on orders above ₹999. We ship across India."/>
+            <column name="content"><![CDATA[<h2>Delivery Across India</h2>
+<p>We deliver to all serviceable pin codes across India. Our sarees are carefully packed to ensure they reach you in perfect condition.</p>
+<h2>Shipping Charges</h2>
+<ul>
+<li><strong>Free Shipping</strong> on orders above ₹999</li>
+<li><strong>₹99 flat rate</strong> for orders below ₹999</li>
+</ul>
+<h2>Processing Time</h2>
+<p>Orders are processed within <strong>1-2 business days</strong>. You will receive a confirmation email once your order is dispatched with tracking details.</p>
+<h2>Delivery Time</h2>
+<ul>
+<li><strong>Metro cities:</strong> 3-5 business days</li>
+<li><strong>Other cities:</strong> 5-7 business days</li>
+<li><strong>Remote areas:</strong> 7-10 business days</li>
+</ul>
+<h2>Tracking Your Order</h2>
+<p>Once shipped, you will receive a tracking number via email and SMS. You can also track your order on our <a href="/track">Track Order</a> page using your order number.</p>
+<h2>Packaging</h2>
+<p>Each saree is carefully folded with tissue paper and packed in a branded box to preserve the fabric quality during transit.</p>
+<h2>International Shipping</h2>
+<p>We currently ship only within India. For international orders, please contact us at <a href="mailto:ch.dhanunjaiah@gmail.com">ch.dhanunjaiah@gmail.com</a> for custom shipping arrangements.</p>
+<h2>Contact Us</h2>
+<p>For any shipping-related queries, reach us at:</p>
+<ul>
+<li>Phone: <a href="tel:+919440249456">+91 94402 49456</a></li>
+<li>Email: <a href="mailto:ch.dhanunjaiah@gmail.com">ch.dhanunjaiah@gmail.com</a></li>
+</ul>]]></column>
+        </insert>
+
+        <insert tableName="policies" schemaName="homebase_db">
+            <column name="slug" value="return-policy"/>
+            <column name="title" value="Return &amp; Refund Policy"/>
+            <column name="meta_description" value="Return and refund policy for Dhanunjaiah Handlooms. 7-day return window for handwoven sarees."/>
+            <column name="content"><![CDATA[<h2>Return Window</h2>
+<p>We accept returns within <strong>7 days</strong> of delivery. The item must be unused, unwashed, and in its original packaging with all tags intact.</p>
+<h2>Eligible for Return</h2>
+<ul>
+<li>Product received is damaged or defective</li>
+<li>Wrong product delivered</li>
+<li>Product significantly different from the description or images</li>
+</ul>
+<h2>Not Eligible for Return</h2>
+<ul>
+<li>Product has been used, washed, or altered</li>
+<li>Tags or packaging removed</li>
+<li>Return requested after 7 days of delivery</li>
+<li>Minor color variations due to monitor settings (handwoven products may have slight variations which are a mark of authenticity)</li>
+</ul>
+<h2>How to Initiate a Return</h2>
+<ol>
+<li>Contact us within 7 days of delivery at <a href="mailto:ch.dhanunjaiah@gmail.com">ch.dhanunjaiah@gmail.com</a> or call <a href="tel:+919440249456">+91 94402 49456</a></li>
+<li>Share your order number and reason for return</li>
+<li>Our team will review and confirm the return</li>
+<li>We will arrange a pickup or provide a return shipping label</li>
+</ol>
+<h2>Refund Process</h2>
+<ul>
+<li>Refunds are initiated within <strong>3-5 business days</strong> after we receive and inspect the returned item</li>
+<li>Refund will be credited to the original payment method</li>
+<li>Bank processing may take an additional 5-7 business days</li>
+</ul>
+<h2>Exchange</h2>
+<p>We currently do not offer direct exchanges. Please return the item and place a new order for the desired product.</p>
+<h2>Damaged in Transit</h2>
+<p>If your saree arrives damaged, please share photos of the damaged package and product within 24 hours of delivery. We will arrange a replacement or full refund at no extra cost.</p>
+<h2>Contact Us</h2>
+<p>For return-related queries:</p>
+<ul>
+<li>Phone: <a href="tel:+919440249456">+91 94402 49456</a></li>
+<li>Email: <a href="mailto:ch.dhanunjaiah@gmail.com">ch.dhanunjaiah@gmail.com</a></li>
+</ul>]]></column>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

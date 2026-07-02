@@ -64,8 +64,13 @@ public class CouponService {
             discount = coupon.getValue();
         }
 
+        // Cap discount at 50% of order amount (minimum ₹1 payable)
+        long maxAllowed = orderAmount / 2;
+        if (discount > maxAllowed) {
+            discount = maxAllowed;
+        }
         if (discount >= orderAmount) {
-            discount = orderAmount - 100; // Keep at least ₹1
+            discount = orderAmount - 100;
         }
 
         log.info("Coupon {} validated. Discount: {} paisa on order of {} paisa", code, discount, orderAmount);

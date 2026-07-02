@@ -31,17 +31,20 @@ public class CheckoutController {
     private final RazorpayService razorpayService;
     private final AuthService authService;
     private final AddressService addressService;
+    private final com.pochampally.service.CouponService couponService;
     private final RateLimiter paymentVerifyRateLimiter;
 
     @Value("${app.frontend-url:https://dhanunjaiah.com}")
     private String frontendUrl;
 
     public CheckoutController(OrderService orderService, RazorpayService razorpayService,
-                               AuthService authService, AddressService addressService) {
+                               AuthService authService, AddressService addressService,
+                               com.pochampally.service.CouponService couponService) {
         this.orderService = orderService;
         this.razorpayService = razorpayService;
         this.authService = authService;
         this.addressService = addressService;
+        this.couponService = couponService;
         this.paymentVerifyRateLimiter = new RateLimiter();
     }
 
@@ -98,6 +101,12 @@ public class CheckoutController {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Shipping address must include: line1, city, state, pincode"));
         }
+        if (!addrPincode.matches("^[0-9]{6}$")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid pincode. Must be 6 digits."));
+        }
+        if (addrLine1.length() > 500 || addrCity.length() > 100 || addrState.length() > 100) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Address fields exceed maximum length"));
+        }
 
         // Input sanitization
         if (customerName.length() > 200) customerName = customerName.substring(0, 200);
@@ -122,9 +131,20 @@ public class CheckoutController {
             return ResponseEntity.badRequest().body(Map.of("error", "Provide items or sessionId"));
         }
 
+        // Apply coupon if provided
+        long finalAmount = order.getTotalAmount();
+        if (req.getCouponCode() != null && !req.getCouponCode().isBlank() && authentication != null) {
+            var couponResult = couponService.validate(req.getCouponCode(), order.getTotalAmount(), authentication.getName());
+            if (Boolean.TRUE.equals(couponResult.get("valid"))) {
+                long discount = ((Number) couponResult.get("discountAmount")).longValue();
+                finalAmount = order.getTotalAmount() - discount;
+                orderService.applyCoupon(order.getId(), req.getCouponCode(), discount, finalAmount);
+            }
+        }
+
         String razorpayOrderId;
         try {
-            razorpayOrderId = razorpayService.createRazorpayOrder(order.getTotalAmount(), order.getOrderNumber());
+            razorpayOrderId = razorpayService.createRazorpayOrder(finalAmount, order.getOrderNumber());
             orderService.setRazorpayOrderId(order.getId(), razorpayOrderId);
         } catch (Exception e) {
             log.error("Failed to create Razorpay order for {}: {}", order.getOrderNumber(), e.getMessage());
@@ -213,16 +233,12 @@ public class CheckoutController {
     @GetMapping("/payment-callback")
     public ResponseEntity<Void> paymentCallbackFailed(
             @RequestParam(value = "razorpay_order_id", required = false) String razorpayOrderId) {
-        log.warn("Payment callback: GET — payment failed or cancelled. Razorpay order: {}",
+        log.warn("Payment callback: GET — user redirected after failed/cancelled payment. Razorpay order: {}",
                 razorpayOrderId != null ? razorpayOrderId : "unknown");
 
-        if (razorpayOrderId != null && !razorpayOrderId.isBlank()) {
-            try {
-                orderService.markPaymentFailed(razorpayOrderId);
-            } catch (Exception e) {
-                log.warn("Could not mark order as failed for Razorpay order: {}", razorpayOrderId);
-            }
-        }
+        // DO NOT cancel orders here — unsigned GET can be spoofed.
+        // Razorpay webhook (payment.failed) handles order cancellation with signature verification.
+        // Expired orders are cleaned up by the scheduled job (30 min timeout).
 
         return ResponseEntity.status(302).header("Location",
                 frontendUrl + "/checkout?error=payment_failed").build();

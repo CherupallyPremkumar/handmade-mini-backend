@@ -10,10 +10,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
 public class ProductController {
+
+    @org.springframework.beans.factory.annotation.Value("${app.frontend-url:https://dhanunjaiah.com}")
+    private String frontendUrl;
 
     private final ProductService productService;
     private final SettingsService settingsService;
@@ -74,6 +78,89 @@ public class ProductController {
                         "createdTime", p.getCreatedTime().toString()
                 ))
                 .toList());
+    }
+
+    @GetMapping(value = "/api/products/feed.xml", produces = "application/xml; charset=UTF-8")
+    public ResponseEntity<String> googleProductFeed() {
+        List<Product> products = productService.listActive();
+
+        StringBuilder xml = new StringBuilder();
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        xml.append("<rss version=\"2.0\" xmlns:g=\"http://base.google.com/ns/1.0\">\n");
+        xml.append("<channel>\n");
+        xml.append("<title>Dhanunjaiah Handlooms</title>\n");
+        xml.append("<link>").append(esc(frontendUrl)).append("</link>\n");
+        xml.append("<description>Authentic Handwoven Pochampally Ikat Sarees</description>\n");
+
+        for (Product p : products) {
+            if (p.getImages() == null || p.getImages().isEmpty()) continue;
+
+            xml.append("<item>\n");
+            xml.append("  <g:id>").append(esc(p.getSku())).append("</g:id>\n");
+            xml.append("  <title>").append(esc(p.getName())).append("</title>\n");
+            xml.append("  <description>").append(esc(desc(p))).append("</description>\n");
+            xml.append("  <link>").append(esc(frontendUrl)).append("/sarees/").append(esc(p.getId())).append("</link>\n");
+            xml.append("  <g:image_link>").append(esc(p.getImages().get(0))).append("</g:image_link>\n");
+            for (int i = 1; i < Math.min(p.getImages().size(), 10); i++) {
+                xml.append("  <g:additional_image_link>").append(esc(p.getImages().get(i))).append("</g:additional_image_link>\n");
+            }
+            xml.append("  <g:availability>").append(p.getStock() > 0 ? "in_stock" : "out_of_stock").append("</g:availability>\n");
+            if (p.getMrp() != null && p.getMrp() > p.getSellingPrice()) {
+                xml.append("  <g:price>").append(String.format("%.2f INR", p.getMrp() / 100.0)).append("</g:price>\n");
+                xml.append("  <g:sale_price>").append(String.format("%.2f INR", p.getSellingPrice() / 100.0)).append("</g:sale_price>\n");
+            } else {
+                xml.append("  <g:price>").append(String.format("%.2f INR", p.getSellingPrice() / 100.0)).append("</g:price>\n");
+            }
+            xml.append("  <g:brand>Dhanunjaiah Handlooms</g:brand>\n");
+            xml.append("  <g:condition>new</g:condition>\n");
+            xml.append("  <g:google_product_category>5765</g:google_product_category>\n");
+            xml.append("  <g:product_type>Apparel &amp; Accessories &gt; Clothing &gt; Sarees</g:product_type>\n");
+            xml.append("  <g:mpn>").append(esc(p.getSku())).append("</g:mpn>\n");
+            if (p.getBodyColor() != null) xml.append("  <g:color>").append(esc(p.getBodyColor())).append("</g:color>\n");
+            if (p.getFabric() != null) xml.append("  <g:material>").append(esc(fabricLabel(p.getFabric()))).append("</g:material>\n");
+            if (p.getPattern() != null) xml.append("  <g:pattern>").append(esc(p.getPattern())).append("</g:pattern>\n");
+            xml.append("  <g:gender>Female</g:gender>\n");
+            xml.append("  <g:age_group>adult</g:age_group>\n");
+            xml.append("  <g:identifier_exists>false</g:identifier_exists>\n");
+            xml.append("  <g:shipping>\n");
+            xml.append("    <g:country>IN</g:country>\n");
+            xml.append("    <g:price>0.00 INR</g:price>\n");
+            xml.append("  </g:shipping>\n");
+            xml.append("</item>\n");
+        }
+
+        xml.append("</channel>\n");
+        xml.append("</rss>");
+
+        return ResponseEntity.ok()
+                .header("Cache-Control", "public, max-age=3600")
+                .body(xml.toString());
+    }
+
+    private String desc(Product p) {
+        if (p.getDescription() != null && !p.getDescription().isBlank()) {
+            return p.getDescription().length() > 5000 ? p.getDescription().substring(0, 5000) : p.getDescription();
+        }
+        return "Handwoven " + (p.getFabric() != null ? fabricLabel(p.getFabric()) + " " : "")
+                + (p.getWeaveType() != null ? p.getWeaveType().name() + " " : "") + "saree from Dhanunjaiah Handlooms";
+    }
+
+    private String fabricLabel(Product.Fabric fabric) {
+        return switch (fabric) {
+            case SILK -> "Silk";
+            case COTTON -> "Cotton";
+            case SILK_COTTON -> "Silk Cotton";
+            case LINEN -> "Linen";
+            case POLYESTER -> "Polyester";
+            case GEORGETTE -> "Georgette";
+            case CHIFFON -> "Chiffon";
+        };
+    }
+
+    private String esc(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("\"", "&quot;").replace("'", "&apos;");
     }
 
     // --- Admin endpoints ---

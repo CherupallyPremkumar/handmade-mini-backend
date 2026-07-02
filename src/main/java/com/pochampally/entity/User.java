@@ -27,9 +27,19 @@ public class User {
     @Column(length = 20)
     private String phone;
 
+    // Nullable: OAuth-only accounts (e.g. Google sign-in) have no local password.
     @com.fasterxml.jackson.annotation.JsonIgnore
-    @Column(name = "password_hash", nullable = false, length = 500)
+    @Column(name = "password_hash", length = 500)
     private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider", nullable = false, length = 20)
+    @Builder.Default
+    private AuthProvider authProvider = AuthProvider.LOCAL;
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Column(name = "google_sub", unique = true, length = 255)
+    private String googleSub;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -65,5 +75,9 @@ public class User {
 
     public enum Role {
         ADMIN, CUSTOMER
+    }
+
+    public enum AuthProvider {
+        LOCAL, GOOGLE
     }
 }

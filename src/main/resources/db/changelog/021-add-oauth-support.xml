@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- OAuth (Google) sign-in support. Schema change — runs in all contexts. -->
+
+    <changeSet id="021-users-password-hash-nullable" author="homebase_db">
+        <comment>OAuth-only accounts have no local password.</comment>
+        <dropNotNullConstraint tableName="users" schemaName="homebase_db"
+                               columnName="password_hash" columnDataType="VARCHAR(500)"/>
+    </changeSet>
+
+    <changeSet id="021-users-add-auth-provider" author="homebase_db">
+        <addColumn tableName="users" schemaName="homebase_db">
+            <column name="auth_provider" type="VARCHAR(20)" defaultValue="LOCAL">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <!-- Backfill any pre-existing rows explicitly (defaultValue covers most engines, this is belt-and-braces). -->
+        <sql>UPDATE homebase_db.users SET auth_provider = 'LOCAL' WHERE auth_provider IS NULL</sql>
+    </changeSet>
+
+    <changeSet id="021-users-add-google-sub" author="homebase_db">
+        <addColumn tableName="users" schemaName="homebase_db">
+            <column name="google_sub" type="VARCHAR(255)"/>
+        </addColumn>
+        <addUniqueConstraint tableName="users" schemaName="homebase_db"
+                             columnNames="google_sub" constraintName="uq_users_google_sub"/>
+    </changeSet>
+
+</databaseChangeLog>

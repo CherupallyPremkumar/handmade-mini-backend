@@ -97,6 +97,11 @@ public class Steps {
         w.postAuth(url, body);
     }
 
+    @When("I POST {string} with empty body")
+    public void postEmpty(String url) throws Exception {
+        w.post(url, "{}");
+    }
+
     @When("I GET {string}")
     public void getUrl(String url) throws Exception {
         w.get(url);
@@ -172,6 +177,16 @@ public class Steps {
     public void productStockIs(String name, int expected) {
         int actual = w.products.findById(w.productId(name)).orElseThrow().getStock();
         assertThat(actual).isEqualTo(expected);
+    }
+
+    @When("the product {string} sellingPrice is updated to {long}")
+    public void updateProductPrice(String name, long newPrice) {
+        var p = w.products.findById(w.productId(name)).orElseThrow();
+        p.setSellingPrice(newPrice);
+        w.products.save(p);
+        // Evict caches so cart sees fresh price
+        w.cacheManager.getCache("products").evict(p.getId());
+        w.cacheManager.getCache("productLists").clear();
     }
 
     // ═══════════════════════════════════════════════
@@ -320,7 +335,17 @@ public class Steps {
 
     @Then("the response JSON key {string} is {int}")
     public void jsonInt(String key, int expected) throws Exception {
-        assertThat(w.jsonKeyInt(key)).isEqualTo(expected);
+        assertThat(w.jsonKeyLong(key)).isEqualTo((long) expected);
+    }
+
+    @Then("the response JSON key {string} is true")
+    public void jsonTrue(String key) throws Exception {
+        assertThat(w.jsonBody().get(key).asBoolean()).isTrue();
+    }
+
+    @Then("the response JSON key {string} is false")
+    public void jsonFalse(String key) throws Exception {
+        assertThat(w.jsonBody().get(key).asBoolean()).isFalse();
     }
 
     @Then("the response JSON key {string} is not empty")
@@ -617,5 +642,94 @@ public class Steps {
              "gstPct":5,"hsnCode":"50079090"}
             """.formatted(name);
         w.putAuth("/api/admin/products/" + id, body);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  VIDEO COMPRESSION WEBHOOK
+    // ═══════════════════════════════════════════════
+
+    private static final String TEST_VIDEO_WEBHOOK_SECRET = "test-video-webhook-secret-do-not-use-in-prod";
+    private String pendingWebhookBody;
+
+    @Given("a video webhook secret is configured")
+    public void configureVideoWebhookSecret() {
+        org.springframework.test.util.ReflectionTestUtils.setField(
+                w.videoWebhookController, "webhookSecret", TEST_VIDEO_WEBHOOK_SECRET);
+    }
+
+    @Given("the video webhook secret is NOT configured")
+    public void clearVideoWebhookSecret() {
+        org.springframework.test.util.ReflectionTestUtils.setField(
+                w.videoWebhookController, "webhookSecret", "");
+    }
+
+    @Given("product {string} starts with videoStatus {string}")
+    public void productStartsWithVideoStatus(String name, String status) {
+        var p = w.products.findById(w.productId(name)).orElseThrow();
+        p.setVideoStatus(com.pochampally.entity.Product.VideoStatus.valueOf(status));
+        if ("COMPRESSING".equals(status) || "READY".equals(status) || "FAILED".equals(status)) {
+            if (p.getVideoUrl() == null) {
+                p.setVideoUrl("https://cdn.example.com/temp-videos/initial.mp4");
+            }
+        }
+        w.products.saveAndFlush(p);
+    }
+
+    @Then("product {string} has videoStatus {string}")
+    public void productVideoStatusIs(String name, String expected) {
+        var p = w.products.findById(w.productId(name)).orElseThrow();
+        assertThat(p.getVideoStatus().name()).isEqualTo(expected);
+    }
+
+    @Then("product {string} videoUrl is {string}")
+    public void productVideoUrlIs(String name, String expected) {
+        var p = w.products.findById(w.productId(name)).orElseThrow();
+        assertThat(p.getVideoUrl()).isEqualTo(expected);
+    }
+
+    @When("I POST {string} with video webhook body:")
+    public void prepareVideoWebhookBody(String url, String body) {
+        // Replace PLACEHOLDER with real product ID from the first created product
+        String realProductId = w.productIds.values().iterator().next();
+        this.pendingWebhookBody = body.replace("PLACEHOLDER", realProductId);
+        // Store the URL too — actual POST happens in the next step
+        this.pendingWebhookUrl = url;
+    }
+
+    private String pendingWebhookUrl;
+
+    @When("without webhook signature")
+    public void postVideoWebhookNoSig() throws Exception {
+        w.call(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .post(pendingWebhookUrl)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content(pendingWebhookBody));
+    }
+
+    @When("with invalid webhook signature")
+    public void postVideoWebhookInvalidSig() throws Exception {
+        w.call(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .post(pendingWebhookUrl)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .header("X-Webhook-Signature", "invalid-signature-0000")
+                .content(pendingWebhookBody));
+    }
+
+    @When("with valid webhook signature")
+    public void postVideoWebhookValidSig() throws Exception {
+        String signature = computeHmacSha256(pendingWebhookBody, TEST_VIDEO_WEBHOOK_SECRET);
+        w.call(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .post(pendingWebhookUrl)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .header("X-Webhook-Signature", signature)
+                .content(pendingWebhookBody));
+    }
+
+    private String computeHmacSha256(String body, String secret) throws Exception {
+        javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+        mac.init(new javax.crypto.spec.SecretKeySpec(
+                secret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
+        byte[] computed = mac.doFinal(body.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        return java.util.HexFormat.of().formatHex(computed);
     }
 }

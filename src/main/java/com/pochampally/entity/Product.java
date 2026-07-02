@@ -86,6 +86,11 @@ public class Product {
     @Column(name = "video_url", length = 1000)
     private String videoUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "video_status", length = 20)
+    @Builder.Default
+    private VideoStatus videoStatus = VideoStatus.NONE;
+
     // Tax
     @Column(name = "hsn_code", nullable = false, length = 20)
     @Builder.Default
@@ -178,5 +183,16 @@ public class Product {
 
     public enum WeaveType {
         IKAT, TELIA_RUMAL, MERCERIZED, HANDLOOM, POWERLOOM, JACQUARD, PLAIN
+    }
+
+    public enum VideoStatus {
+        /** No video uploaded yet. */
+        NONE,
+        /** Video uploaded to temp location, waiting for Lambda compression. */
+        COMPRESSING,
+        /** Compression complete, videoUrl points to final compressed version. */
+        READY,
+        /** Compression failed; videoUrl may still point to temp location. */
+        FAILED
     }
 }

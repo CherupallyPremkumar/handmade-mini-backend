@@ -41,6 +41,12 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <!-- OAuth2 login (Google) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+
         <!-- JWT (jjwt) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -109,11 +115,28 @@
             <version>2.25.0</version>
         </dependency>
 
+        <!-- AWS Lambda SDK — async invoke for video compression -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>lambda</artifactId>
+            <version>2.25.0</version>
+        </dependency>
+
         <!-- PDF Generation -->
         <dependency>
             <groupId>com.github.librepdf</groupId>
             <artifactId>openpdf</artifactId>
             <version>2.0.3</version>
+        </dependency>
+
+        <!-- Cache (Caffeine in-memory) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
         </dependency>
 
         <!-- Test -->

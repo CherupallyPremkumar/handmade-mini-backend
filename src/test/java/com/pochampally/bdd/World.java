@@ -40,6 +40,8 @@ public class World {
     @Autowired com.pochampally.repository.AppSettingRepository appSettings;
     @Autowired RateLimiter rateLimiter;
     @Autowired com.pochampally.controller.CheckoutController checkoutController;
+    @Autowired com.pochampally.controller.VideoCompressionWebhookController videoWebhookController;
+    @Autowired org.springframework.cache.CacheManager cacheManager;
 
     // ── Per-scenario state ──
     MvcResult lastResult;
@@ -54,6 +56,11 @@ public class World {
     public void cleanDb() {
         rateLimiter.reset();
         checkoutController.getPaymentVerifyRateLimiter().reset();
+        // Clear caches between scenarios to prevent stale data leaks
+        cacheManager.getCacheNames().forEach(name -> {
+            var cache = cacheManager.getCache(name);
+            if (cache != null) cache.clear();
+        });
         reviews.deleteAll();
         couponUsages.deleteAll();
         coupons.deleteAll();

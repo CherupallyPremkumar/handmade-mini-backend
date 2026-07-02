@@ -1,5 +1,6 @@
 package com.pochampally.controller;
 
+import com.pochampally.dto.CartResponse;
 import com.pochampally.entity.CartItem;
 import com.pochampally.service.CartService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,18 @@ public class CartController {
     @GetMapping("/{sessionId}")
     public ResponseEntity<List<CartItem>> getCart(@PathVariable String sessionId) {
         return ResponseEntity.ok(cartService.getCart(sessionId));
+    }
+
+    /** Enriched cart with current prices, snapshot comparison, stock status. */
+    @GetMapping("/{sessionId}/details")
+    public ResponseEntity<CartResponse> getCartDetails(@PathVariable String sessionId) {
+        return ResponseEntity.ok(cartService.buildCartResponse(sessionId));
+    }
+
+    /** Refresh price snapshots to current values (user accepts price changes). */
+    @PostMapping("/{sessionId}/accept-prices")
+    public ResponseEntity<CartResponse> acceptPriceChanges(@PathVariable String sessionId) {
+        return ResponseEntity.ok(cartService.acceptPriceChanges(sessionId));
     }
 
     @PostMapping("/{sessionId}/add")
